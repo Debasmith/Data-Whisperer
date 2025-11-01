@@ -1,0 +1,78 @@
+2025-10-31 23:57:30 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-31 23:57:30 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-10-31 23:57:30 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-31 23:57:35 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-10-31 23:57:35 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-10-31 23:57:35 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-10-31 23:58:02 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-10-31 23:58:02 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 00:00:45 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 00:00:45 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 00:02:28 - src.ui.dashboard - [32mINFO[0m - Processing query: show me customers who belong to north region and are from healthcare industry
+2025-11-01 00:02:28 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 00:02:50 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-11-01 00:02:53 - src.query.query_processor - [32mINFO[0m -  SQL: SELECT *
+FROM synthetic_crm_data
+WHERE region = 'North' AND industry = 'Healthcare';...
+2025-11-01 00:02:53 - src.query.query_processor - [32mINFO[0m - Executing query...
+2025-11-01 00:03:48 - src.query.query_processor - [32mINFO[0m -  Got 3 rows, 7 columns
+2025-11-01 00:03:48 - src.query.query_processor - [32mINFO[0m - Generating visualization...
+2025-11-01 00:03:49 - src.query.query_processor - [31mERROR[0m - Query processing failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 314, in process_query
+    viz_config = self._recommend_visualization(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 409, in _recommend_visualization
+    viz_response = self.viz_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3091, in invoke
+    input_ = context.run(step.invoke, input_, config, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 209, in invoke
+    return self._call_with_config(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 2021, in _call_with_config
+    context.run(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\config.py", line 428, in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 182, in _format_prompt_with_error_handling
+    inner_input_ = self._validate_input(inner_input)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 176, in _validate_input
+    raise KeyError(
+KeyError: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-11-01 00:03:49 - src.ui.dashboard - [31mERROR[0m - Query failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-11-01 00:09:31 - src.ui.dashboard - [32mINFO[0m - Processing query: show me customers who belong to north region and are from healthcare industry
+2025-11-01 00:09:31 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 00:09:42 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-11-01 00:09:45 - src.query.query_processor - [32mINFO[0m -  SQL: SELECT *
+FROM synthetic_crm_data
+WHERE region = 'North' AND industry = 'Healthcare';...
+2025-11-01 00:09:45 - src.query.query_processor - [32mINFO[0m - Executing query...
+2025-11-01 00:10:40 - src.query.query_processor - [32mINFO[0m -  Got 3 rows, 7 columns
+2025-11-01 00:10:40 - src.query.query_processor - [32mINFO[0m - Generating visualization...
+2025-11-01 00:10:40 - src.query.query_processor - [31mERROR[0m - Query processing failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 314, in process_query
+    viz_config = self._recommend_visualization(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 409, in _recommend_visualization
+    viz_response = self.viz_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3091, in invoke
+    input_ = context.run(step.invoke, input_, config, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 209, in invoke
+    return self._call_with_config(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 2021, in _call_with_config
+    context.run(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\config.py", line 428, in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 182, in _format_prompt_with_error_handling
+    inner_input_ = self._validate_input(inner_input)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 176, in _validate_input
+    raise KeyError(
+KeyError: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-11-01 00:10:40 - src.ui.dashboard - [31mERROR[0m - Query failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '

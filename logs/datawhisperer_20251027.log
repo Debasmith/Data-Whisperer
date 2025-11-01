@@ -1,0 +1,440 @@
+2025-10-27 00:32:01 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-27 00:32:01 - __main__ - [32mINFO[0m - 🚀 Starting DataWhisperer - Natural Language Data Analytics
+2025-10-27 00:32:01 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-27 00:32:04 - src.query.query_processor - [32mINFO[0m - ✅ Query processor initialized
+2025-10-27 00:32:04 - src.ui.dashboard - [32mINFO[0m - ✅ Dashboard initialized
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m - 
+📊 Dashboard Configuration:
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m - 
+🌐 Starting web server...
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-10-27 00:32:04 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-10-27 00:33:53 - src.ui.dashboard - [32mINFO[0m - 📁 Processing uploaded file...
+2025-10-27 00:33:53 - src.query.query_processor - [32mINFO[0m - ⚙️ Initialising Spark session...
+2025-10-27 00:35:18 - src.query.query_processor - [32mINFO[0m - 📊 Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-10-27 00:35:18 - src.ui.dashboard - [32mINFO[0m - ✅ File 'synthetic_crm_data.csv' loaded successfully
+2025-10-27 00:35:18 - src.ui.dashboard - [31mERROR[0m - Error loading file: 'NoneType' object has no attribute 'success'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 219, in _on_file_upload
+    pn.state.notifications.success(message, duration=3000)
+AttributeError: 'NoneType' object has no attribute 'success'
+2025-10-27 00:40:45 - src.ui.dashboard - [32mINFO[0m - 🔍 Processing query: Count of customers by status
+Count of customers by industry
+List of all churned customers
+Customers who haven't been contacted in the last 60 days
+2025-10-27 00:40:45 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-10-27 00:41:05 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-10-27 00:41:08 - src.query.query_processor - [32mINFO[0m - 📝 SQL: SELECT status, COUNT(*) AS customer_count FROM synthetic_crm_data GROUP BY status...
+2025-10-27 00:41:08 - src.query.query_processor - [32mINFO[0m - ⚙️ Executing query...
+2025-10-27 00:41:46 - src.query.query_processor - [32mINFO[0m - ✓ Got 3 rows, 2 columns
+2025-10-27 00:41:46 - src.query.query_processor - [32mINFO[0m - 🎨 Generating visualization...
+2025-10-27 00:41:46 - src.query.query_processor - [31mERROR[0m - ❌ Query processing failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 324, in process_query
+    viz_config = self._recommend_visualization(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 422, in _recommend_visualization
+    viz_response = self.viz_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3091, in invoke
+    input_ = context.run(step.invoke, input_, config, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 209, in invoke
+    return self._call_with_config(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 2021, in _call_with_config
+    context.run(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\config.py", line 428, in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 182, in _format_prompt_with_error_handling
+    inner_input_ = self._validate_input(inner_input)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 176, in _validate_input
+    raise KeyError(
+KeyError: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-10-27 00:41:46 - src.ui.dashboard - [31mERROR[0m - ❌ Query failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-10-27 00:41:47 - src.ui.dashboard - [31mERROR[0m - Error processing query: 'NoneType' object has no attribute 'error'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 306, in _on_submit_query
+    pn.state.notifications.error(
+AttributeError: 'NoneType' object has no attribute 'error'
+2025-10-27 01:01:40 - src.ui.dashboard - [32mINFO[0m - 🔍 Processing query: Count of customers by status
+Count of customers by industry
+List of all churned customers
+Customers who haven't been contacted in the last 60 days
+2025-10-27 01:01:40 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-10-27 01:01:59 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-10-27 01:02:03 - src.query.query_processor - [32mINFO[0m - 📝 SQL: SELECT status, COUNT(*) AS customer_count FROM synthetic_crm_data GROUP BY status...
+2025-10-27 01:02:03 - src.query.query_processor - [32mINFO[0m - ⚙️ Executing query...
+2025-10-27 01:02:22 - src.query.query_processor - [31mERROR[0m - ❌ Query processing failed: An error occurred while calling o69.collectToPython.
+: org.apache.spark.SparkException: Job aborted due to stage failure: Task 2 in stage 6.0 failed 1 times, most recent failure: Lost task 2.0 in stage 6.0 (TID 28) (LAPTOP-7FC1LF7R executor driver): org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+
+Driver stacktrace:
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$3(DAGScheduler.scala:2935)
+	at scala.Option.getOrElse(Option.scala:201)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2935)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2$adapted(DAGScheduler.scala:2927)
+	at scala.collection.immutable.List.foreach(List.scala:334)
+	at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:2927)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1$adapted(DAGScheduler.scala:1295)
+	at scala.Option.foreach(Option.scala:437)
+	at org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:3207)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3141)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3130)
+	at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:50)
+Caused by: org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 312, in process_query
+    result_pandas = result_df.toPandas()
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\sql\classic\dataframe.py", line 1792, in toPandas
+    return PandasConversionMixin.toPandas(self)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\sql\pandas\conversion.py", line 197, in toPandas
+    rows = self.collect()
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\sql\classic\dataframe.py", line 443, in collect
+    sock_info = self._jdf.collectToPython()
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\py4j\java_gateway.py", line 1362, in __call__
+    return_value = get_return_value(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\errors\exceptions\captured.py", line 282, in deco
+    return f(*a, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\py4j\protocol.py", line 327, in get_return_value
+    raise Py4JJavaError(
+py4j.protocol.Py4JJavaError: An error occurred while calling o69.collectToPython.
+: org.apache.spark.SparkException: Job aborted due to stage failure: Task 2 in stage 6.0 failed 1 times, most recent failure: Lost task 2.0 in stage 6.0 (TID 28) (LAPTOP-7FC1LF7R executor driver): org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+
+Driver stacktrace:
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$3(DAGScheduler.scala:2935)
+	at scala.Option.getOrElse(Option.scala:201)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2935)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2$adapted(DAGScheduler.scala:2927)
+	at scala.collection.immutable.List.foreach(List.scala:334)
+	at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:2927)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1$adapted(DAGScheduler.scala:1295)
+	at scala.Option.foreach(Option.scala:437)
+	at org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:3207)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3141)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3130)
+	at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:50)
+Caused by: org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+
+2025-10-27 01:02:22 - src.ui.dashboard - [31mERROR[0m - ❌ Query failed: An error occurred while calling o69.collectToPython.
+: org.apache.spark.SparkException: Job aborted due to stage failure: Task 2 in stage 6.0 failed 1 times, most recent failure: Lost task 2.0 in stage 6.0 (TID 28) (LAPTOP-7FC1LF7R executor driver): org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+
+Driver stacktrace:
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$3(DAGScheduler.scala:2935)
+	at scala.Option.getOrElse(Option.scala:201)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2935)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2$adapted(DAGScheduler.scala:2927)
+	at scala.collection.immutable.List.foreach(List.scala:334)
+	at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:2927)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$handleTaskSetFailed$1$adapted(DAGScheduler.scala:1295)
+	at scala.Option.foreach(Option.scala:437)
+	at org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:1295)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:3207)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3141)
+	at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:3130)
+	at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:50)
+Caused by: org.apache.spark.SparkException: Python worker failed to connect back.
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:252)
+	at org.apache.spark.api.python.PythonWorkerFactory.create(PythonWorkerFactory.scala:143)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:158)
+	at org.apache.spark.SparkEnv.createPythonWorker(SparkEnv.scala:178)
+	at org.apache.spark.api.python.BasePythonRunner.compute(PythonRunner.scala:261)
+	at org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.rdd.MapPartitionsRDD.compute(MapPartitionsRDD.scala:52)
+	at org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:374)
+	at org.apache.spark.rdd.RDD.iterator(RDD.scala:338)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:107)
+	at org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)
+	at org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:171)
+	at org.apache.spark.scheduler.Task.run(Task.scala:147)
+	at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$5(Executor.scala:647)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:80)
+	at org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:77)
+	at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:650)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.SocketTimeoutException: Timed out while waiting for the Python worker to connect back
+	at org.apache.spark.api.python.PythonWorkerFactory.createSimpleWorker(PythonWorkerFactory.scala:234)
+	... 34 more
+
+2025-10-27 01:02:22 - src.ui.dashboard - [31mERROR[0m - Error processing query: 'NoneType' object has no attribute 'error'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 306, in _on_submit_query
+    pn.state.notifications.error(
+AttributeError: 'NoneType' object has no attribute 'error'
+2025-10-27 01:41:46 - __main__ - [32mINFO[0m - 
+
+👋 Shutting down DataWhisperer gracefully...
+2025-10-27 10:03:24 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-27 10:03:24 - __main__ - [32mINFO[0m - 🚀 Starting DataWhisperer - Natural Language Data Analytics
+2025-10-27 10:03:24 - __main__ - [32mINFO[0m - ================================================================================
+2025-10-27 10:03:26 - src.query.query_processor - [32mINFO[0m - ✅ Query processor initialized
+2025-10-27 10:03:26 - src.ui.dashboard - [32mINFO[0m - ✅ Dashboard initialized
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m - 
+📊 Dashboard Configuration:
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m - 
+🌐 Starting web server...
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-10-27 10:03:26 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-10-27 10:03:49 - src.ui.dashboard - [32mINFO[0m - 📁 Processing uploaded file...
+2025-10-27 10:03:49 - src.query.query_processor - [32mINFO[0m - ⚙️ Initialising Spark session...
+2025-10-27 10:05:12 - src.query.query_processor - [32mINFO[0m - 📊 Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-10-27 10:05:12 - src.ui.dashboard - [32mINFO[0m - ✅ File 'synthetic_crm_data.csv' loaded successfully
+2025-10-27 10:05:12 - src.ui.dashboard - [31mERROR[0m - Error loading file: 'NoneType' object has no attribute 'success'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 219, in _on_file_upload
+    pn.state.notifications.success(message, duration=3000)
+AttributeError: 'NoneType' object has no attribute 'success'
+2025-10-27 10:06:05 - src.ui.dashboard - [32mINFO[0m - 🔍 Processing query: Customers who haven't been contacted in the last 60 days
+List of all churned customers
+Count of customers by status
+2025-10-27 10:06:05 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-10-27 10:06:22 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-10-27 10:06:25 - src.query.query_processor - [32mINFO[0m - 📝 SQL: SELECT * FROM synthetic_crm_data WHERE last_contact_date < date_sub(current_date(), 60)...
+2025-10-27 10:06:25 - src.query.query_processor - [32mINFO[0m - ⚙️ Executing query...
+2025-10-27 10:07:16 - src.query.query_processor - [32mINFO[0m - ✓ Got 94 rows, 7 columns
+2025-10-27 10:07:16 - src.query.query_processor - [32mINFO[0m - 🎨 Generating visualization...
+2025-10-27 10:07:16 - src.query.query_processor - [31mERROR[0m - ❌ Query processing failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 324, in process_query
+    viz_config = self._recommend_visualization(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 422, in _recommend_visualization
+    viz_response = self.viz_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3091, in invoke
+    input_ = context.run(step.invoke, input_, config, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 209, in invoke
+    return self._call_with_config(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 2021, in _call_with_config
+    context.run(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\config.py", line 428, in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 182, in _format_prompt_with_error_handling
+    inner_input_ = self._validate_input(inner_input)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 176, in _validate_input
+    raise KeyError(
+KeyError: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-10-27 10:07:16 - src.ui.dashboard - [31mERROR[0m - ❌ Query failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-10-27 10:07:16 - src.ui.dashboard - [31mERROR[0m - Error processing query: 'NoneType' object has no attribute 'error'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 306, in _on_submit_query
+    pn.state.notifications.error(
+AttributeError: 'NoneType' object has no attribute 'error'
+2025-10-27 10:08:39 - __main__ - [32mINFO[0m - 
+
+👋 Shutting down DataWhisperer gracefully...

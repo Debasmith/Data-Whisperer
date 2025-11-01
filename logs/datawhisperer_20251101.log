@@ -1,0 +1,677 @@
+2025-11-01 00:29:44 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 00:29:44 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 00:29:44 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 00:29:46 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 00:29:46 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 00:29:46 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 00:30:43 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 00:30:43 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 00:34:05 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 00:34:05 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 00:38:52 - src.ui.dashboard - [32mINFO[0m - Processing query: show me the number of customers who are from north region and who belong to healthcare industry 
+2025-11-01 00:38:52 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 00:39:19 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-11-01 00:39:23 - src.query.query_processor - [32mINFO[0m -  SQL: SELECT COUNT(*) AS customer_count FROM synthetic_crm_data WHERE region = 'North' AND industry = 'Hea...
+2025-11-01 00:39:23 - src.query.query_processor - [32mINFO[0m - Executing query...
+2025-11-01 00:40:27 - src.query.query_processor - [32mINFO[0m -  Got 1 rows, 1 columns
+2025-11-01 00:40:27 - src.query.query_processor - [32mINFO[0m - Generating visualization...
+2025-11-01 00:40:27 - src.query.query_processor - [31mERROR[0m - Query processing failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 314, in process_query
+    viz_config = self._recommend_visualization(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 409, in _recommend_visualization
+    viz_response = self.viz_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3091, in invoke
+    input_ = context.run(step.invoke, input_, config, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 209, in invoke
+    return self._call_with_config(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 2021, in _call_with_config
+    context.run(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\config.py", line 428, in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 182, in _format_prompt_with_error_handling
+    inner_input_ = self._validate_input(inner_input)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\prompts\base.py", line 176, in _validate_input
+    raise KeyError(
+KeyError: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-11-01 00:40:27 - src.ui.dashboard - [31mERROR[0m - Query failed: 'Input to ChatPromptTemplate is missing variables {\'\\n  "visualization_type"\'}.  Expected: [\'\\n  "visualization_type"\', \'columns\', \'query_results\', \'row_count\', \'sql_query\', \'user_query\'] Received: [\'user_query\', \'sql_query\', \'query_results\', \'columns\', \'row_count\']\nNote: if you intended {\n  "visualization_type"} to be part of the string and not a variable, please escape it with double curly braces like: \'{{\n  "visualization_type"}}\'.\nFor troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/INVALID_PROMPT_INPUT '
+2025-11-01 00:46:23 - __main__ - [32mINFO[0m - 
+
+Shutting down DataWhisperer
+2025-11-01 00:46:52 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 00:46:52 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 00:46:52 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 00:46:54 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 00:46:54 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 00:46:54 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 00:50:15 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 00:50:15 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 00:51:50 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 00:51:50 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 00:52:30 - src.ui.dashboard - [32mINFO[0m - Processing query: show me the number of customers who are from north region and who belong to healthcare industry 
+2025-11-01 00:52:30 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 00:52:50 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-11-01 00:52:53 - src.query.query_processor - [32mINFO[0m -  SQL: SELECT COUNT(*) AS customer_count FROM synthetic_crm_data WHERE region = 'North' AND industry = 'Hea...
+2025-11-01 00:52:53 - src.query.query_processor - [32mINFO[0m - Executing query...
+2025-11-01 00:53:37 - src.query.query_processor - [32mINFO[0m -  Got 1 rows, 1 columns
+2025-11-01 00:53:37 - src.query.query_processor - [32mINFO[0m - Generating visualization...
+2025-11-01 00:53:44 - src.query.query_processor - [32mINFO[0m -  Visualization: number
+2025-11-01 00:53:44 - src.ui.dashboard - [32mINFO[0m - Query processed successfully
+2025-11-01 00:59:14 - src.ui.dashboard - [32mINFO[0m - Processing query: What is the average duration between join_date and last_contact_date for churned vs active customers?
+Which region has the highest churn rate in the Finance industry?
+In which industry do customers tend to churn the fastest?
+Which features correlate most strongly with churn?
+2025-11-01 00:59:14 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 00:59:34 - src.query.query_processor - [32mINFO[0m - ✓ Validating SQL...
+2025-11-01 00:59:39 - src.query.query_processor - [32mINFO[0m -  SQL: SELECT
+  AVG(date_diff('day', synthetic_crm_data.join_date, synthetic_crm_data.last_contact_date)) A...
+2025-11-01 00:59:39 - src.query.query_processor - [32mINFO[0m - Executing query...
+2025-11-01 00:59:41 - src.query.query_processor - [33mWARNING[0m - Attempt 1 failed: 
+[INVALID_PARAMETER_VALUE.DATETIME_UNIT] The value of parameter(s) `unit` in `date_diff` is invalid:...
+2025-11-01 00:59:47 - src.query.query_processor - [32mINFO[0m - Retrying with fixed query...
+2025-11-01 00:59:47 - src.query.query_processor - [33mWARNING[0m - Attempt 2 failed: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(...
+2025-11-01 00:59:53 - src.query.query_processor - [32mINFO[0m - Retrying with fixed query...
+2025-11-01 00:59:53 - src.query.query_processor - [33mWARNING[0m - Attempt 3 failed: 
+[INVALID_PARAMETER_VALUE.DATETIME_UNIT] The value of parameter(s) `unit` in `date_diff` is invalid:...
+2025-11-01 00:59:58 - src.query.query_processor - [32mINFO[0m - Retrying with fixed query...
+2025-11-01 00:59:58 - src.query.query_processor - [33mWARNING[0m - Attempt 4 failed: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(...
+2025-11-01 01:00:03 - src.query.query_processor - [32mINFO[0m - Retrying with fixed query...
+2025-11-01 01:00:03 - src.query.query_processor - [33mWARNING[0m - Attempt 5 failed: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(...
+2025-11-01 01:00:03 - src.query.query_processor - [31mERROR[0m - Query processing failed: Failed after 5 attempts: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(date_diff('day', synthetic_crm_data.join_date, synthetic_crm_data.last_contact_date)) AS avg_duration,
+^^^
+CASE
+    WHEN synthetic_crm_data.status = 'Churned' THEN TRUE
+    ELSE FALSE
+END AS is_churned
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 379, in _execute_with_retry
+    result = spark.sql(current_sql)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\sql\session.py", line 1810, in sql
+    return DataFrame(self._jsparkSession.sql(sqlQuery, litArgs), self)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\py4j\java_gateway.py", line 1362, in __call__
+    return_value = get_return_value(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\pyspark\errors\exceptions\captured.py", line 288, in deco
+    raise converted from None
+pyspark.errors.exceptions.captured.ParseException: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(date_diff('day', synthetic_crm_data.join_date, synthetic_crm_data.last_contact_date)) AS avg_duration,
+^^^
+CASE
+    WHEN synthetic_crm_data.status = 'Churned' THEN TRUE
+    ELSE FALSE
+END AS is_churned
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 300, in process_query
+    result_df = self._execute_with_retry(sql_query)
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 397, in _execute_with_retry
+    raise Exception(f"Failed after {self.config.max_retries} attempts: {error_msg}")
+Exception: Failed after 5 attempts: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(date_diff('day', synthetic_crm_data.join_date, synthetic_crm_data.last_contact_date)) AS avg_duration,
+^^^
+CASE
+    WHEN synthetic_crm_data.status = 'Churned' THEN TRUE
+    ELSE FALSE
+END AS is_churned
+
+2025-11-01 01:00:03 - src.ui.dashboard - [31mERROR[0m - Query failed: Failed after 5 attempts: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'AVG'. SQLSTATE: 42601 (line 1, pos 0)
+
+== SQL ==
+AVG(date_diff('day', synthetic_crm_data.join_date, synthetic_crm_data.last_contact_date)) AS avg_duration,
+^^^
+CASE
+    WHEN synthetic_crm_data.status = 'Churned' THEN TRUE
+    ELSE FALSE
+END AS is_churned
+
+2025-11-01 01:30:04 - __main__ - [32mINFO[0m - 
+
+Shutting down DataWhisperer
+2025-11-01 01:31:29 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 01:31:29 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 01:31:29 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 01:31:30 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 01:31:30 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 01:31:30 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 01:31:57 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 01:31:57 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 01:32:58 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 01:32:58 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 01:35:42 - src.ui.dashboard - [32mINFO[0m - Processing query: What is the average duration between join_date and last_contact_date for churned vs active customers?
+Which region has the highest churn rate in the Finance industry?
+In which industry do customers tend to churn the fastest?
+Which features correlate most strongly with churn?
+2025-11-01 01:35:42 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 01:36:07 - src.query.query_processor - [31mERROR[0m - Query processing failed: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 292, in process_query
+    sql_query = self._generate_sql(user_query)
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 349, in _generate_sql
+    sql = self.sql_chain.invoke({
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3093, in invoke
+    input_ = context.run(step.invoke, input_, config)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 379, in invoke
+    self.generate_prompt(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1088, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 903, in generate
+    self._generate_with_cache(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1192, in _generate_with_cache
+    result = self._generate(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1212, in _generate
+    raise e
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1207, in _generate
+    raw_response = self.client.with_raw_response.create(**payload)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\resources\chat\completions\completions.py", line 1156, in create
+    return self._post(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.InternalServerError: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+2025-11-01 01:36:08 - src.ui.dashboard - [31mERROR[0m - Query failed: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+2025-11-01 01:43:46 - __main__ - [32mINFO[0m - 
+
+Shutting down DataWhisperer
+2025-11-01 01:44:17 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 01:44:17 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 01:44:17 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 01:44:19 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 01:44:19 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 01:44:20 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 01:46:42 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 01:46:42 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 01:47:43 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 01:47:43 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 01:51:42 - src.ui.dashboard - [32mINFO[0m - Processing query: What is the average duration between join_date and last_contact_date for churned vs active customers?
+Which region has the highest churn rate in the Finance industry?
+In which industry do customers tend to churn the fastest?
+Which features correlate most strongly with churn?
+2025-11-01 01:51:42 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 01:52:06 - src.query.query_processor - [31mERROR[0m - LLM chain failed during SQL generation: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 122, in _safe_chain_invoke
+    return chain.invoke(inputs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3093, in invoke
+    input_ = context.run(step.invoke, input_, config)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 379, in invoke
+    self.generate_prompt(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1088, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 903, in generate
+    self._generate_with_cache(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1192, in _generate_with_cache
+    result = self._generate(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1212, in _generate
+    raise e
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1207, in _generate
+    raw_response = self.client.with_raw_response.create(**payload)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\resources\chat\completions\completions.py", line 1156, in create
+    return self._post(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.InternalServerError: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+2025-11-01 01:52:06 - src.query.query_processor - [31mERROR[0m - Query processing failed: LLM service ran out of memory while SQL generation. Please retry shortly or simplify the request.
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 122, in _safe_chain_invoke
+    return chain.invoke(inputs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3093, in invoke
+    input_ = context.run(step.invoke, input_, config)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 379, in invoke
+    self.generate_prompt(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1088, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 903, in generate
+    self._generate_with_cache(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1192, in _generate_with_cache
+    result = self._generate(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1212, in _generate
+    raise e
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1207, in _generate
+    raw_response = self.client.with_raw_response.create(**payload)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\resources\chat\completions\completions.py", line 1156, in create
+    return self._post(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.InternalServerError: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 308, in process_query
+    sql_query = self._generate_sql(user_query)
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 365, in _generate_sql
+    sql = self._safe_chain_invoke(self.sql_chain, {
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 128, in _safe_chain_invoke
+    raise RuntimeError(
+RuntimeError: LLM service ran out of memory while SQL generation. Please retry shortly or simplify the request.
+2025-11-01 01:52:06 - src.ui.dashboard - [31mERROR[0m - Query failed: LLM service ran out of memory while SQL generation. Please retry shortly or simplify the request.
+2025-11-01 02:03:18 - __main__ - [32mINFO[0m - 
+
+Shutting down DataWhisperer
+2025-11-01 12:33:45 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 12:33:45 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 12:33:45 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 12:33:50 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 12:33:50 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 12:33:50 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 12:39:38 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 12:39:38 - src.query.query_processor - [32mINFO[0m - Initialising Spark session...
+2025-11-01 12:43:12 - src.query.query_processor - [32mINFO[0m - Dataset loaded: 100 rows • 7 columns • table 'synthetic_crm_data'
+2025-11-01 12:43:12 - src.ui.dashboard - [32mINFO[0m - File 'synthetic_crm_data.csv' loaded successfully
+2025-11-01 12:48:37 - src.ui.dashboard - [32mINFO[0m - Processing query: What percentage of customers in Healthcare are active vs churned?
+2025-11-01 12:48:37 - src.query.query_processor - [32mINFO[0m - 🔧 Generating SQL...
+2025-11-01 12:49:18 - src.query.query_processor - [33mWARNING[0m - LLM memory error during SQL generation; retrying with reduced context.
+2025-11-01 12:49:51 - src.query.query_processor - [31mERROR[0m - LLM chain failed during SQL generation even after context reduction: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 128, in _safe_chain_invoke
+    return chain.invoke(inputs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3093, in invoke
+    input_ = context.run(step.invoke, input_, config)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 379, in invoke
+    self.generate_prompt(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1088, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 903, in generate
+    self._generate_with_cache(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1192, in _generate_with_cache
+    result = self._generate(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1212, in _generate
+    raise e
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1207, in _generate
+    raw_response = self.client.with_raw_response.create(**payload)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\resources\chat\completions\completions.py", line 1156, in create
+    return self._post(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.InternalServerError: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+2025-11-01 12:49:51 - src.query.query_processor - [31mERROR[0m - Query processing failed: 'RuntimeError' object has no attribute 'format'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 128, in _safe_chain_invoke
+    return chain.invoke(inputs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\runnables\base.py", line 3093, in invoke
+    input_ = context.run(step.invoke, input_, config)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 379, in invoke
+    self.generate_prompt(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1088, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 903, in generate
+    self._generate_with_cache(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_core\language_models\chat_models.py", line 1192, in _generate_with_cache
+    result = self._generate(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1212, in _generate
+    raise e
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\langchain_openai\chat_models\base.py", line 1207, in _generate
+    raw_response = self.client.with_raw_response.create(**payload)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\resources\chat\completions\completions.py", line 1156, in create
+    return self._post(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.InternalServerError: Error code: 500 - {'error': {'message': 'memory layout cannot be allocated', 'type': 'api_error', 'param': None, 'code': None}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 368, in process_query
+    sql_query = self._generate_sql(user_query)
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 425, in _generate_sql
+    sql = self._safe_chain_invoke(self.sql_chain, {
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 139, in _safe_chain_invoke
+    return self._safe_chain_invoke(
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 155, in _safe_chain_invoke
+    ).format(stage=stage) from exc
+AttributeError: 'RuntimeError' object has no attribute 'format'
+2025-11-01 12:49:51 - src.ui.dashboard - [31mERROR[0m - Query failed: 'RuntimeError' object has no attribute 'format'
+2025-11-01 12:59:17 - __main__ - [32mINFO[0m - 
+
+Shutting down DataWhisperer
+2025-11-01 13:15:54 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:15:54 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:15:54 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:15:57 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:15:57 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:15:57 - __main__ - [31mERROR[0m - 
+Fatal error: Markdown.__init__() got an unexpected keyword argument 'style'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 641, in create_app
+    self._create_header(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 59, in _create_header
+    pn.pane.Markdown(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 311, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 155, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: Markdown.__init__() got an unexpected keyword argument 'style'
+2025-11-01 13:23:57 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:23:57 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:23:57 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:23:59 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:23:59 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:23:59 - __main__ - [31mERROR[0m - 
+Fatal error: Markdown.__init__() got an unexpected keyword argument 'style'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 641, in create_app
+    self._create_header(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 59, in _create_header
+    pn.pane.Markdown(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 311, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 155, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: Markdown.__init__() got an unexpected keyword argument 'style'
+2025-11-01 13:28:00 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:28:00 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:28:00 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:28:01 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:28:01 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:28:01 - __main__ - [31mERROR[0m - 
+Fatal error: Markdown.__init__() got an unexpected keyword argument 'style'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 641, in create_app
+    self._create_header(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 59, in _create_header
+    pn.pane.Markdown(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 311, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\pane\base.py", line 155, in __init__
+    super().__init__(object=object, **params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: Markdown.__init__() got an unexpected keyword argument 'style'
+2025-11-01 13:32:13 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:32:13 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:32:13 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:32:14 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:32:14 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:32:14 - __main__ - [31mERROR[0m - 
+Fatal error: FileInput.__init__() got an unexpected keyword argument 'button_type'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 642, in create_app
+    self._create_upload_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 73, in _create_upload_section
+    self.file_input = pn.widgets.FileInput(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\base.py", line 154, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: FileInput.__init__() got an unexpected keyword argument 'button_type'
+2025-11-01 13:38:41 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:38:41 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:38:41 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:38:41 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:38:41 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:38:41 - __main__ - [31mERROR[0m - 
+Fatal error: FileInput.__init__() got an unexpected keyword argument 'button_type'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 642, in create_app
+    self._create_upload_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 73, in _create_upload_section
+    self.file_input = pn.widgets.FileInput(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\base.py", line 154, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: FileInput.__init__() got an unexpected keyword argument 'button_type'
+2025-11-01 13:40:19 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:40:19 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:40:19 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:40:19 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:40:19 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:40:19 - __main__ - [31mERROR[0m - 
+Fatal error: FileInput.__init__() got an unexpected keyword argument 'button_type'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 642, in create_app
+    self._create_upload_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 73, in _create_upload_section
+    self.file_input = pn.widgets.FileInput(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\base.py", line 154, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: FileInput.__init__() got an unexpected keyword argument 'button_type'
+2025-11-01 13:42:01 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:42:01 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:42:01 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:42:01 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:42:01 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:42:01 - __main__ - [31mERROR[0m - 
+Fatal error: Selector parameter 'LoadingSpinner.color' does not accept '#5c6bc0'; valid options include: '[primary, secondary, success, info, danger, warning, light, dark]'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 643, in create_app
+    self._create_query_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 176, in _create_query_section
+    self.status_indicator = pn.indicators.LoadingSpinner(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\indicators.py", line 97, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\base.py", line 154, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1985, in _setup_params
+    setattr(self, name, resolved)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 517, in _f
+    return f(self, obj, val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1509, in __set__
+    self._validate(val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameters.py", line 1923, in _validate
+    self._validate_value(val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameters.py", line 1939, in _validate_value
+    raise ValueError(
+ValueError: Selector parameter 'LoadingSpinner.color' does not accept '#5c6bc0'; valid options include: '[primary, secondary, success, info, danger, warning, light, dark]'
