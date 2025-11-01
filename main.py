@@ -1,6 +1,8 @@
 import os
 import sys
 from pathlib import Path
+import socket
+from contextlib import closing
 import panel as pn
 from src.config import Config
 from src.ui.dashboard import DataWhispererDashboard
@@ -12,12 +14,46 @@ pn.extension('plotly', 'tabulator', notifications=True, sizing_mode='stretch_wid
 logger = setup_logger(__name__)
 
 
+def _is_port_available(host: str, port: int) -> bool:
+    """Return True if the given host:port can be bound."""
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def _get_available_port(host: str, start_port: int, attempts: int = 10) -> int:
+    """Find an available port starting from start_port within the attempt limit."""
+
+    port = start_port
+    for _ in range(attempts):
+        if _is_port_available(host, port):
+            return port
+        port += 1
+    raise RuntimeError(
+        f"No available port found near {start_port}. Check running processes or adjust configuration."
+    )
+
+
 def main():
     """Main application entry point"""
     try:
         # Load configuration
         config = Config()
-        
+
+        available_port = _get_available_port(config.host, config.port)
+        if available_port != config.port:
+            logger.warning(
+                "Port %s is in use. Switching to available port %s.",
+                config.port,
+                available_port,
+            )
+            config.port = available_port
+
         logger.info("=" * 80)
         logger.info("Starting DataWhisperer")
         logger.info("=" * 80)

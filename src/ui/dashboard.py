@@ -3,6 +3,7 @@ Main Dashboard UI for DataWhisperer
 Save this as: src/ui/dashboard.py
 """
 
+from pathlib import Path
 import panel as pn
 import param
 from typing import Optional
@@ -176,18 +177,20 @@ class DataWhispererDashboard(param.Parameterized):
         self.status_indicator = pn.indicators.LoadingSpinner(
             value=False,
             size=25,
-            color='#5c6bc0',
+            color='primary',
             bgcolor='light',
             visible=False
         )
         
         button_row = pn.Row(
+            pn.layout.HSpacer(),
             self.submit_button,
             self.clear_button,
             self.status_indicator,
+            pn.layout.HSpacer(),
             align='center',
-            justify='center',
-            margin=(10, 0, 20, 0)
+            margin=(10, 0, 20, 0),
+            sizing_mode='stretch_width'
         )
         
         examples = pn.Accordion(
@@ -255,7 +258,7 @@ class DataWhispererDashboard(param.Parameterized):
         
         return pn.Card(
             self.results_column,
-            title="📊 ANALYSIS RESULTS",
+            title="ANALYSIS RESULTS",
             header_background='#f8f9fa',
             header_color='#333',
             sizing_mode='stretch_width',
@@ -289,7 +292,7 @@ class DataWhispererDashboard(param.Parameterized):
             file_size_mb = len(event.new) / (1024 * 1024)
             
             if file_size_mb > max_size_mb:
-                error_msg = f"❌ File size ({file_size_mb:.2f}MB) exceeds maximum allowed size ({max_size_mb}MB)"
+                error_msg = f"File size ({file_size_mb:.2f}MB) exceeds maximum allowed size ({max_size_mb}MB)"
                 logger.error(error_msg)
                 pn.state.notifications.error(error_msg, duration=5000)
                 self.file_input.value = None
@@ -297,18 +300,21 @@ class DataWhispererDashboard(param.Parameterized):
             
             # Get file info
             file_name = self.file_input.filename
-            file_extension = file_name.split('.')[-1].lower()
-            
-            if file_extension not in self.config.supported_file_types:
-                supported = ", ".join([f".{ext}" for ext in self.config.supported_file_types])
-                error_msg = f"❌ Unsupported file type: .{file_extension}. Supported types: {supported}"
+            file_extension = Path(file_name).suffix.lower()
+
+            if not file_extension or file_extension not in self.config.supported_file_types:
+                supported = ", ".join(self.config.supported_file_types)
+                error_msg = (
+                    f"Unsupported file type: {file_extension or 'None'}. "
+                    f"Supported types: {supported}"
+                )
                 logger.error(error_msg)
                 pn.state.notifications.error(error_msg, duration=5000)
                 self.file_input.value = None
                 return
             
             # Show processing message
-            processing_msg = f"🔍 Analyzing {file_name} ({file_size_mb:.1f} MB)..."
+            processing_msg = f"Analyzing {file_name} ({file_size_mb:.1f} MB)..."
             pn.state.notifications.info(processing_msg, duration=3000)
             
             # Process the file in a separate thread to avoid blocking the UI
@@ -324,7 +330,7 @@ class DataWhispererDashboard(param.Parameterized):
                         file_name
                     )
                     
-                    success_msg = f"✅ Successfully loaded {file_name} with {len(df.columns)} columns and {len(df):,} rows"
+                    success_msg = f"Successfully loaded {file_name} with {len(df.columns)} columns and {len(df):,} rows"
                     logger.info(success_msg)
                     pn.state.execute_on_main_thread(
                         pn.state.notifications.success,
@@ -333,7 +339,7 @@ class DataWhispererDashboard(param.Parameterized):
                     )
                     
                 except Exception as e:
-                    error_msg = f"❌ Error processing {file_name}: {str(e)}"
+                    error_msg = f"Error processing {file_name}: {str(e)}"
                     logger.error(error_msg, exc_info=True)
                     pn.state.execute_on_main_thread(
                         pn.state.notifications.error,
@@ -367,7 +373,7 @@ class DataWhispererDashboard(param.Parameterized):
             thread.start()
             
         except Exception as e:
-            error_msg = f"❌ Unexpected error during file upload: {str(e)}"
+            error_msg = f"Unexpected error during file upload: {str(e)}"
             logger.error(error_msg, exc_info=True)
             pn.state.notifications.error(error_msg, duration=6000)
             

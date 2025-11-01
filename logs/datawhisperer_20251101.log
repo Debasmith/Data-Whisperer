@@ -675,3 +675,219 @@ Traceback (most recent call last):
   File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameters.py", line 1939, in _validate_value
     raise ValueError(
 ValueError: Selector parameter 'LoadingSpinner.color' does not accept '#5c6bc0'; valid options include: '[primary, secondary, success, info, danger, warning, light, dark]'
+2025-11-01 13:55:45 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:55:45 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:55:45 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:55:45 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:55:45 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:55:45 - __main__ - [31mERROR[0m - 
+Fatal error: Selector parameter 'LoadingSpinner.color' does not accept '#5c6bc0'; valid options include: '[primary, secondary, success, info, danger, warning, light, dark]'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 643, in create_app
+    self._create_query_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 176, in _create_query_section
+    self.status_indicator = pn.indicators.LoadingSpinner(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\indicators.py", line 97, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\widgets\base.py", line 154, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1985, in _setup_params
+    setattr(self, name, resolved)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 517, in _f
+    return f(self, obj, val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1509, in __set__
+    self._validate(val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameters.py", line 1923, in _validate
+    self._validate_value(val)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameters.py", line 1939, in _validate_value
+    raise ValueError(
+ValueError: Selector parameter 'LoadingSpinner.color' does not accept '#5c6bc0'; valid options include: '[primary, secondary, success, info, danger, warning, light, dark]'
+2025-11-01 13:57:28 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:57:28 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:57:28 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:57:29 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:57:29 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:57:29 - __main__ - [31mERROR[0m - 
+Fatal error: Row.__init__() got an unexpected keyword argument 'justify'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 643, in create_app
+    self._create_query_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 184, in _create_query_section
+    button_row = pn.Row(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\layout\base.py", line 375, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: Row.__init__() got an unexpected keyword argument 'justify'
+2025-11-01 13:57:50 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:57:50 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:57:50 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:57:50 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:57:50 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:57:50 - __main__ - [31mERROR[0m - 
+Fatal error: Row.__init__() got an unexpected keyword argument 'justify'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 29, in main
+    app = dashboard.create_app()
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 643, in create_app
+    self._create_query_section(),
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 184, in _create_query_section
+    button_row = pn.Row(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\layout\base.py", line 375, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 651, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\reactive.py", line 129, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 732, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 563, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 308, in __init__
+    super().__init__(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 4325, in __init__
+    refs, deps = self.param._setup_params(**params)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1697, in override_initialization
+    ret = fn(self_, *args, **kw)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\param\parameterized.py", line 1948, in _setup_params
+    raise TypeError(
+TypeError: Row.__init__() got an unexpected keyword argument 'justify'
+2025-11-01 13:59:54 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:59:54 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 13:59:54 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 13:59:55 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 13:59:55 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 13:59:55 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 14:01:02 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 14:01:02 - src.ui.dashboard - [31mERROR[0m - ❌ Unsupported file type: .csv. Supported types: ..csv, ..xlsx, ..xls, ..json, ..parquet
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:35:36 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 14:35:36 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • Port: 5007
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • URL: http://localhost:5007
+2025-11-01 14:35:36 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 14:35:36 - __main__ - [31mERROR[0m - 
+Fatal error: [WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\main.py", line 43, in main
+    app.show(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\viewable.py", line 471, in show
+    return serve(
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\io\server.py", line 868, in serve
+    return get_server(panels, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\io\server.py", line 1171, in get_server
+    server = Server(apps, port=port, **opts)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\panel\io\server.py", line 324, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\bokeh\server\server.py", line 430, in __init__
+    sockets, self._port = bind_sockets(opts.address, opts.port)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\bokeh\server\util.py", line 68, in bind_sockets
+    ss = netutil.bind_sockets(port=port or 0, address=address)
+  File "C:\Users\DEBASMITH\AppData\Roaming\Python\Python310\site-packages\tornado\netutil.py", line 162, in bind_sockets
+    sock.bind(sockaddr)
+OSError: [WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted
+2025-11-01 14:39:22 - __main__ - [33mWARNING[0m - Port 5007 is in use. Switching to available port 5008.
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:39:22 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 14:39:22 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • Port: 5008
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • URL: http://localhost:5008
+2025-11-01 14:39:22 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 14:39:49 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 14:39:49 - src.ui.dashboard - [31mERROR[0m - ❌ Unsupported file type: .csv. Supported types: ..csv, ..xlsx, ..xls, ..json, ..parquet
+2025-11-01 14:44:09 - __main__ - [33mWARNING[0m - Port 5007 is in use. Switching to available port 5008.
+2025-11-01 14:44:09 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:44:09 - __main__ - [32mINFO[0m - Starting DataWhisperer
+2025-11-01 14:44:09 - __main__ - [32mINFO[0m - ================================================================================
+2025-11-01 14:44:11 - src.query.query_processor - [32mINFO[0m - Query processor initialized
+2025-11-01 14:44:11 - src.ui.dashboard - [32mINFO[0m - Dashboard initialized
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m - 
+Dashboard Configuration:
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • LLM Model: gemma3
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • Port: 5008
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • Max Retries: 5
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • Supported Formats: .csv, .xlsx, .xls, .json, .parquet
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m - 
+Starting web server...
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • URL: http://localhost:5008
+2025-11-01 14:44:11 - __main__ - [32mINFO[0m -    • Press Ctrl+C to stop the server
+
+2025-11-01 14:45:58 - src.ui.dashboard - [32mINFO[0m - Processing uploaded file...
+2025-11-01 14:45:58 - src.query.query_processor - [31mERROR[0m - Failed to load dataset b'customer_id,customer_name,industry,status,join_date,last_contact_date,region\r\nC001,Customer_1,Transportation,Active,18-07-2022,07-09-2024,North\r\nC002,Customer_2,Finance,Active,17-10-2024,12-07-2025,North\r\nC003,Customer_3,Healthcare,Churned,07-03-2021,31-01-2024,West\r\nC004,Customer_4,Healthcare,Active,01-11-2023,08-09-2025,South\r\nC005,Customer_5,Healthcare,Churned,23-08-2024,12-07-2025,South\r\nC006,Customer_6,IT Services,Active,21-04-2024,11-10-2024,West\r\nC007,Customer_7,Healthcare,Active,28-11-2022,11-10-2024,West\r\nC008,Customer_8,Finance,Active,29-07-2021,04-04-2024,East\r\nC009,Customer_9,IT Services,Active,06-12-2022,10-09-2025,East\r\nC010,Customer_10,Retail,Active,04-01-2024,07-05-2024,West\r\nC011,Customer_11,IT Services,Active,11-07-2024,25-09-2025,East\r\nC012,Customer_12,Retail,Churned,13-12-2024,12-03-2024,South\r\nC013,Customer_13,Healthcare,Churned,16-08-2022,22-03-2024,South\r\nC014,Customer_14,Finance,Active,24-07-2022,09-04-2025,West\r\nC015,Customer_15,Transportation,Inactive,29-01-2023,29-12-2024,South\r\nC016,Customer_16,Finance,Churned,08-12-2024,14-03-2024,East\r\nC017,Customer_17,Manufacturing,Churned,30-12-2023,07-09-2024,South\r\nC018,Customer_18,Finance,Inactive,07-07-2022,24-07-2025,West\r\nC019,Customer_19,Finance,Churned,25-04-2021,22-08-2024,East\r\nC020,Customer_20,Healthcare,Inactive,03-07-2022,08-03-2024,West\r\nC021,Customer_21,Finance,Churned,12-03-2022,26-05-2025,East\r\nC022,Customer_22,IT Services,Churned,20-10-2021,28-09-2024,West\r\nC023,Customer_23,Finance,Active,12-04-2024,14-03-2025,East\r\nC024,Customer_24,Manufacturing,Inactive,26-03-2022,21-05-2024,East\r\nC025,Customer_25,Manufacturing,Inactive,07-04-2021,22-04-2024,North\r\nC026,Customer_26,Finance,Churned,25-10-2024,08-03-2025,South\r\nC027,Customer_27,Manufacturing,Active,21-02-2023,02-09-2025,West\r\nC028,Customer_28,IT Services,Churned,08-02-2024,12-01-2024,East\r\nC029,Customer_29,Transportation,Churned,28-10-2024,03-07-2025,North\r\nC030,Customer_30,Retail,Churned,17-08-2021,27-10-2024,East\r\nC031,Customer_31,IT Services,Active,07-01-2021,26-09-2024,West\r\nC032,Customer_32,Manufacturing,Active,04-07-2024,01-11-2024,North\r\nC033,Customer_33,Transportation,Churned,10-11-2021,17-01-2025,South\r\nC034,Customer_34,Finance,Churned,11-05-2024,27-11-2024,North\r\nC035,Customer_35,IT Services,Active,14-01-2023,10-11-2024,North\r\nC036,Customer_36,Finance,Active,07-03-2024,21-03-2024,South\r\nC037,Customer_37,Healthcare,Churned,22-05-2021,29-06-2025,West\r\nC038,Customer_38,Finance,Active,31-01-2024,18-06-2024,West\r\nC039,Customer_39,Retail,Churned,10-03-2022,06-07-2025,West\r\nC040,Customer_40,Transportation,Churned,31-12-2024,15-11-2024,South\r\nC041,Customer_41,IT Services,Churned,17-06-2023,13-06-2025,East\r\nC042,Customer_42,IT Services,Active,06-04-2022,06-03-2024,South\r\nC043,Customer_43,Retail,Active,20-04-2024,13-08-2024,South\r\nC044,Customer_44,Healthcare,Active,14-04-2022,10-03-2024,North\r\nC045,Customer_45,Healthcare,Inactive,19-11-2023,31-08-2024,North\r\nC046,Customer_46,Retail,Churned,15-03-2022,06-07-2025,West\r\nC047,Customer_47,Finance,Churned,13-05-2022,29-04-2025,West\r\nC048,Customer_48,IT Services,Active,18-07-2021,17-03-2025,North\r\nC049,Customer_49,Retail,Inactive,15-08-2023,25-02-2024,West\r\nC050,Customer_50,Transportation,Churned,05-05-2021,16-02-2025,North\r\nC051,Customer_51,Transportation,Inactive,25-05-2022,15-07-2024,North\r\nC052,Customer_52,Finance,Churned,15-10-2021,08-03-2025,West\r\nC053,Customer_53,Finance,Inactive,27-05-2022,18-03-2024,West\r\nC054,Customer_54,IT Services,Churned,14-04-2021,07-07-2025,North\r\nC055,Customer_55,Healthcare,Active,07-12-2021,20-02-2025,South\r\nC056,Customer_56,IT Services,Inactive,02-04-2023,01-03-2024,South\r\nC057,Customer_57,Finance,Inactive,11-03-2023,28-09-2024,North\r\nC058,Customer_58,IT Services,Inactive,27-11-2024,23-07-2025,West\r\nC059,Customer_59,Transportation,Churned,14-11-2021,13-07-2024,West\r\nC060,Customer_60,Retail,Active,01-04-2024,09-07-2025,North\r\nC061,Customer_61,Healthcare,Churned,28-04-2021,21-02-2024,East\r\nC062,Customer_62,Manufacturing,Inactive,27-04-2021,04-06-2025,South\r\nC063,Customer_63,Healthcare,Active,03-05-2024,10-03-2024,North\r\nC064,Customer_64,Transportation,Active,03-09-2021,06-08-2025,West\r\nC065,Customer_65,Finance,Churned,22-06-2024,24-03-2024,North\r\nC066,Customer_66,IT Services,Churned,19-06-2022,28-07-2024,East\r\nC067,Customer_67,Transportation,Churned,04-05-2022,28-09-2024,East\r\nC068,Customer_68,IT Services,Active,26-07-2023,19-11-2024,East\r\nC069,Customer_69,Healthcare,Active,26-06-2024,30-07-2025,West\r\nC070,Customer_70,Healthcare,Active,03-11-2023,28-09-2024,South\r\nC071,Customer_71,Finance,Inactive,16-05-2022,13-01-2025,North\r\nC072,Customer_72,Retail,Active,18-01-2024,05-11-2024,West\r\nC073,Customer_73,Manufacturing,Churned,29-09-2024,21-07-2025,North\r\nC074,Customer_74,Retail,Churned,03-10-2021,27-09-2024,North\r\nC075,Customer_75,Healthcare,Active,12-07-2022,15-10-2024,South\r\nC076,Customer_76,Manufacturing,Active,21-02-2022,27-09-2024,East\r\nC077,Customer_77,Manufacturing,Inactive,15-04-2021,04-04-2024,East\r\nC078,Customer_78,Transportation,Inactive,01-04-2021,04-01-2024,East\r\nC079,Customer_79,Retail,Active,27-11-2021,28-03-2025,East\r\nC080,Customer_80,Manufacturing,Churned,23-02-2024,10-01-2024,West\r\nC081,Customer_81,Healthcare,Active,23-01-2024,06-02-2024,South\r\nC082,Customer_82,Retail,Churned,31-05-2023,10-05-2024,South\r\nC083,Customer_83,Healthcare,Inactive,23-03-2021,01-01-2025,East\r\nC084,Customer_84,Finance,Churned,27-09-2024,15-04-2024,South\r\nC085,Customer_85,Retail,Churned,25-06-2024,07-06-2024,West\r\nC086,Customer_86,Finance,Active,25-04-2023,26-01-2024,South\r\nC087,Customer_87,Finance,Churned,24-04-2023,11-09-2024,East\r\nC088,Customer_88,Retail,Active,23-02-2023,09-02-2024,North\r\nC089,Customer_89,IT Services,Active,01-08-2023,24-12-2024,South\r\nC090,Customer_90,Retail,Active,18-02-2021,16-07-2024,South\r\nC091,Customer_91,IT Services,Inactive,23-05-2021,12-10-2024,East\r\nC092,Customer_92,Retail,Churned,23-10-2024,03-07-2025,West\r\nC093,Customer_93,Retail,Active,19-06-2022,01-07-2024,North\r\nC094,Customer_94,Manufacturing,Inactive,11-08-2021,02-09-2025,North\r\nC095,Customer_95,IT Services,Inactive,13-06-2023,12-09-2025,East\r\nC096,Customer_96,Manufacturing,Active,26-03-2024,13-07-2024,West\r\nC097,Customer_97,Retail,Active,04-01-2021,16-06-2025,West\r\nC098,Customer_98,Manufacturing,Churned,16-01-2023,17-03-2025,South\r\nC099,Customer_99,Healthcare,Churned,30-06-2024,17-11-2024,East\r\nC100,Customer_100,Transportation,Active,05-11-2023,12-11-2024,East\r\n': argument should be a str object or an os.PathLike object returning str, not <class 'bytes'>
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\query\query_processor.py", line 53, in load_dataset
+    extension = Path(filename).suffix.lower()
+  File "C:\Program Files\Python310\lib\pathlib.py", line 960, in __new__
+    self = cls._from_parts(args)
+  File "C:\Program Files\Python310\lib\pathlib.py", line 594, in _from_parts
+    drv, root, parts = self._parse_args(args)
+  File "C:\Program Files\Python310\lib\pathlib.py", line 583, in _parse_args
+    raise TypeError(
+TypeError: argument should be a str object or an os.PathLike object returning str, not <class 'bytes'>
+2025-11-01 14:45:58 - src.ui.dashboard - [31mERROR[0m - ❌ Error processing synthetic_crm_data.csv: '_state' object has no attribute 'execute_on_main_thread'
+Traceback (most recent call last):
+  File "C:\Users\DEBASMITH\OneDrive\Desktop\DataWhisperer\src\ui\dashboard.py", line 327, in process_file
+    pn.state.execute_on_main_thread(
+AttributeError: '_state' object has no attribute 'execute_on_main_thread'. Did you mean: '_execute_on_thread'?
