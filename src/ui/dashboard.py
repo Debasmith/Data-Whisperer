@@ -321,48 +321,51 @@ class DataWhispererDashboard(param.Parameterized):
             def process_file():
                 try:
                     # Load the dataset
-                    df = self.query_processor.load_dataset(file_name, event.new)
-                    
+                    success, message = self.query_processor.load_dataset(event.new, file_name)
+
+                    if not success:
+                        raise ValueError(message)
+
+                    column_count = len(self.query_processor.schema_details)
+                    row_count = self.query_processor.row_count
+
                     # Update UI on the main thread
-                    pn.state.execute_on_main_thread(
-                        self._update_ui_after_upload,
-                        df,
-                        file_name
+                    pn.state.execute(
+                        lambda: self._update_ui_after_upload(file_name)
                     )
-                    
-                    success_msg = f"Successfully loaded {file_name} with {len(df.columns)} columns and {len(df):,} rows"
-                    logger.info(success_msg)
-                    pn.state.execute_on_main_thread(
-                        pn.state.notifications.success,
-                        success_msg,
-                        duration=4000
+
+                    success_msg = (
+                        f"Successfully loaded {file_name} with "
+                        f"{column_count} columns and {row_count:,} rows"
                     )
-                    
+                    logger.info("%s | %s", success_msg, message)
+                    pn.state.execute(
+                        lambda: pn.state.notifications.success(success_msg, duration=4000)
+                    )
+
                 except Exception as e:
                     error_msg = f"Error processing {file_name}: {str(e)}"
                     logger.error(error_msg, exc_info=True)
-                    pn.state.execute_on_main_thread(
-                        pn.state.notifications.error,
-                        error_msg,
-                        duration=6000
+                    pn.state.execute(
+                        lambda: pn.state.notifications.error(error_msg, duration=6000)
                     )
                     
                     # Reset file input on error
-                    pn.state.execute_on_main_thread(
+                    pn.state.execute(
                         lambda: setattr(self.file_input, 'value', None)
                     )
                 finally:
                     # Re-enable UI elements
-                    pn.state.execute_on_main_thread(
+                    pn.state.execute(
                         lambda: setattr(self.status_indicator, 'visible', False)
                     )
-                    pn.state.execute_on_main_thread(
+                    pn.state.execute(
                         lambda: setattr(self.status_indicator, 'value', False)
                     )
-                    pn.state.execute_on_main_thread(
+                    pn.state.execute(
                         lambda: setattr(self.file_input, 'disabled', False)
                     )
-                    pn.state.execute_on_main_thread(
+                    pn.state.execute(
                         lambda: setattr(self.query_input, 'disabled', False)
                     )
             
@@ -384,6 +387,27 @@ class DataWhispererDashboard(param.Parameterized):
             self.query_input.disabled = False
             self.file_input.value = None
     
+    def _update_ui_after_upload(self, file_name: str):
+        """Refresh UI state after a successful dataset upload."""
+
+        logger.info("Dataset '%s' ready for queries", file_name)
+        self.data_loaded = True
+
+        if self.schema_display is not None:
+            self.schema_display.object = self._format_schema()
+
+        if self.query_input is not None:
+            self.query_input.disabled = False
+
+        if self.submit_button is not None:
+            self.submit_button.disabled = False
+
+        pn.state.notifications.info(
+            f"{self.query_processor.table_name} is ready for analysis",
+            duration=2500
+        )
+
+    
     def _format_schema(self) -> str:
         """Format schema information for display"""
         if not self.query_processor.schema_details:
@@ -398,7 +422,7 @@ class DataWhispererDashboard(param.Parameterized):
         
         return md
     
-    async def _on_submit_query(self, event):
+    def _on_submit_query(self, event):
         """Handle query submission with improved visualization and error handling"""
         if self.processing or not self.query_input.value:
             return
@@ -411,116 +435,141 @@ class DataWhispererDashboard(param.Parameterized):
         self.status_indicator.name = "Analyzing..."
         
         query = self.query_input.value.strip()
-        logger.info(f"Processing query: {query}")
-        
-        try:
-            # Show processing notification
-            pn.state.notifications.info(f"Analyzing: {query}", duration=3000)
-            
-            # Process the query
-            result = await self.query_processor.process_query(query)
-            
-            if not result or 'sql' not in result or 'viz_config' not in result:
-                raise ValueError("Invalid result format from query processor")
-            
-            # Create visualization with error handling
-            try:
-                viz = self.viz_engine.create_visualization(
-                    result['data'],
-                    result['viz_config']
-                )
-                
-                # Ensure the visualization has a reasonable size
-                if hasattr(viz, 'sizing_mode'):
-                    viz.sizing_mode = 'stretch_width'
-                if hasattr(viz, 'width'):
-                    viz.width = None  # Allow responsive width
-                if hasattr(viz, 'height') and viz.height > 600:  # Cap height for large visualizations
-                    viz.height = 600
-                
-            except Exception as viz_error:
-                logger.error(f"Error creating visualization: {str(viz_error)}", exc_info=True)
-                # Fallback to a data table if visualization fails
-                viz = pn.widgets.Tabulator(
-                    result['data'],
-                    pagination='local',
-                    page_size=10,
-                    sizing_mode='stretch_width'
-                )
-                result['viz_config']['title'] = f"{result['viz_config'].get('title', 'Results')} (Data Table)"
-            
-            # Create result card
-            result_card = self._create_result_card(
-                query,
-                result['sql'],
-                viz,
-                result['viz_config']
-            )
-            
-            # Add to results (with smooth scroll to top)
-            self.results_column.insert(0, result_card)
-            
-            # Add to query history
-            self.query_history.append({
-                'query': query,
-                'sql': result['sql'],
-                'timestamp': datetime.now().isoformat(),
-                'viz_type': result['viz_config'].get('chart_type', 'table')
-            })
-            
-            # Enable clear button if we have results
-            self.clear_button.disabled = False
-            
-            # Show success message
-            success_msg = f"✅ Analysis complete for: {query}"
-            pn.state.notifications.success(success_msg, duration=4000)
-            logger.info(f"Successfully processed query: {query}")
-            
-            # Clear the input field for the next query
-            self.query_input.value = ""
-            
-        except Exception as e:
-            error_msg = f"❌ Error processing query: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            
-            # Show detailed error in a card
-            error_card = pn.Card(
-                pn.Column(
-                    pn.pane.HTML(
-                        '<div style="text-align: center; padding: 20px;">'
-                        '<i class="fas fa-exclamation-triangle" style="font-size: 36px; color: #dc3545; margin-bottom: 15px;"></i>'
-                        '<h3 style="color: #dc3545; margin: 10px 0;">Analysis Failed</h3>'
-                        f'<p style="color: #6c757d;">{str(e)}</p>'
-                        '<p style="color: #6c757d; font-size: 0.9em;">Please try rephrasing your question or check the data schema.</p>'
-                        '</div>'
-                    ),
-                    pn.Accordion(
-                        ("📋 View Query", pn.pane.Markdown(f"<div style='background: #f8f9fa; padding: 10px; border-radius: 4px;'><pre><code>{query}</code></pre></div>")),
-                        active=[],
-                        header_background='#f8f9fa',
-                        header_color='#495057',
-                        sizing_mode='stretch_width'
-                    )
-                ),
-                styles={
-                    'background': '#fff',
-                    'border': '1px solid #f5c6cb',
-                    'border-radius': '8px',
-                    'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
-                },
-                margin=(0, 0, 20, 0),
-                sizing_mode='stretch_width'
-            )
-            self.results_column.insert(0, error_card)
-            self.clear_button.disabled = False
-            
-        finally:
-            # Reset UI state
+
+        if not query:
             self.processing = False
             self.submit_button.disabled = False
             self.status_indicator.visible = False
             self.status_indicator.value = False
             self.status_indicator.name = ""
+            return
+
+        logger.info("Processing query: %s", query)
+        pn.state.notifications.info(f"Analyzing: {query}", duration=3000)
+
+        def run_query():
+            from datetime import datetime
+
+            try:
+                result = self.query_processor.process_query(query)
+
+                if not result or not result.get('success'):
+                    error_msg = (
+                        result.get('error', 'Unknown error from query processor')
+                        if result else 'Received empty response from query processor'
+                    )
+                    raise ValueError(error_msg)
+
+                viz_config = dict(result.get('viz_config', {}))
+                data = result.get('data')
+                sql_query = result.get('sql_query', '')
+
+                if data is None:
+                    raise ValueError("Query processor returned no data")
+
+                try:
+                    viz = self.viz_engine.create_visualization(
+                        data,
+                        viz_config,
+                        query
+                    )
+
+                    if hasattr(viz, 'sizing_mode'):
+                        viz.sizing_mode = 'stretch_width'
+                    if hasattr(viz, 'width'):
+                        viz.width = None
+                    if hasattr(viz, 'height') and viz.height and viz.height > 600:
+                        viz.height = 600
+
+                except Exception as viz_error:
+                    logger.error(
+                        "Error creating visualization: %s",
+                        viz_error,
+                        exc_info=True
+                    )
+                    viz = pn.widgets.Tabulator(
+                        data,
+                        pagination='local',
+                        page_size=10,
+                        sizing_mode='stretch_width'
+                    )
+                    viz_config['title'] = f"{viz_config.get('title', 'Results')} (Data Table)"
+
+                success_msg = f"✅ Analysis complete for: {query}"
+
+                def apply_success():
+                    result_card = self._create_result_card(
+                        query,
+                        sql_query,
+                        viz,
+                        viz_config
+                    )
+                    self.results_column.insert(0, result_card)
+                    self.query_history.append({
+                        'query': query,
+                        'sql': sql_query,
+                        'timestamp': datetime.now().isoformat(),
+                        'viz_type': viz_config.get('visualization_type', viz_config.get('chart_type', 'table'))
+                    })
+                    self.clear_button.disabled = False
+                    pn.state.notifications.success(success_msg, duration=4000)
+                    logger.info("Successfully processed query: %s", query)
+                    self.query_input.value = ""
+
+                pn.state.execute(apply_success)
+
+            except Exception as exc:
+                error_text = str(exc)
+                logger.error("Error processing query: %s", error_text, exc_info=True)
+
+                def apply_error():
+                    error_msg = f"❌ Error processing query: {error_text}"
+                    pn.state.notifications.error(error_msg, duration=6000)
+                    error_card = pn.Card(
+                        pn.Column(
+                            pn.pane.HTML(
+                                '<div style="text-align: center; padding: 20px;">'
+                                '<i class="fas fa-exclamation-triangle" style="font-size: 36px; color: #dc3545; margin-bottom: 15px;"></i>'
+                                '<h3 style="color: #dc3545; margin: 10px 0;">Analysis Failed</h3>'
+                                f'<p style="color: #6c757d;">{error_text}</p>'
+                                '<p style="color: #6c757d; font-size: 0.9em;">Please try rephrasing your question or check the data schema.</p>'
+                                '</div>'
+                            ),
+                            pn.Accordion(
+                                ("📋 View Query", pn.pane.Markdown(f"<div style='background: #f8f9fa; padding: 10px; border-radius: 4px;'><pre><code>{query}</code></pre></div>")),
+                                active=[],
+                                header_background='#f8f9fa',
+                                header_color='#495057',
+                                sizing_mode='stretch_width'
+                            )
+                        ),
+                        styles={
+                            'background': '#fff',
+                            'border': '1px solid #f5c6cb',
+                            'border-radius': '8px',
+                            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
+                        },
+                        margin=(0, 0, 20, 0),
+                        sizing_mode='stretch_width'
+                    )
+                    self.results_column.insert(0, error_card)
+                    self.clear_button.disabled = False
+
+                pn.state.execute(apply_error)
+
+            finally:
+                def reset_ui():
+                    self.processing = False
+                    self.submit_button.disabled = False
+                    self.status_indicator.visible = False
+                    self.status_indicator.value = False
+                    self.status_indicator.name = ""
+
+                pn.state.execute(reset_ui)
+
+        import threading
+        thread = threading.Thread(target=run_query, daemon=True)
+        thread.start()
     
     def _create_result_card(self, query, sql, viz, viz_config):
         """Create a modern card for displaying results"""
