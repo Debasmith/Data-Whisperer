@@ -1,213 +1,51 @@
 """
-Intelligent Visualization Engine with Smart Chart Selection
+Enhanced Visualization Engine with smarter auto-detection and modern charts
 """
 
 import pandas as pd
 import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
 class VisualizationEngine:
-    """Smart visualization engine that creates appropriate charts"""
+    """Smart visualization engine with enhanced auto-detection"""
     
     def __init__(self, config):
         self.config = config
         self.color_palette = config.get_color_palette()
-
-    def _is_datetime_like_column(self, series: pd.Series, column_name: str) -> bool:
-        """Infer datetime columns from content and naming heuristics."""
-
-        if pd.api.types.is_datetime64_any_dtype(series):
-            return True
-
-        if pd.api.types.is_bool_dtype(series):
-            return False
-
-        sample = series.dropna().head(50)
-        if sample.empty:
-            return False
-
-        parse_ratio = 0.0
-        try:
-            parsed = pd.to_datetime(sample, errors='coerce', infer_datetime_format=True)
-            parse_ratio = parsed.notna().mean()
-        except Exception:
-            parse_ratio = 0.0
-
-        if parse_ratio >= 0.8:
-            return True
-
-        name_hint = column_name.lower()
-        if any(token in name_hint for token in ['date', 'time', 'timestamp', 'day', 'month', 'year', 'week']):
-            return parse_ratio >= 0.5
-
-        return False
-
-    def _is_numeric_like_series(self, series: pd.Series) -> bool:
-        """Detect numeric columns even when stored as strings."""
-
-        if pd.api.types.is_numeric_dtype(series):
-            return True
-
-        if pd.api.types.is_bool_dtype(series):
-            return False
-
-        sample = series.dropna().head(50)
-        if sample.empty:
-            return False
-
-        numeric_sample = pd.to_numeric(sample, errors='coerce')
-        valid_ratio = numeric_sample.notna().mean()
-
-        return valid_ratio >= 0.8
-
-    def _looks_like_percentage_distribution(
-        self,
-        data: pd.DataFrame,
-        numeric_cols: List[str]
-    ) -> bool:
-        """Identify datasets that represent percentage splits."""
-
-        for col in numeric_cols:
-            series = pd.to_numeric(data[col], errors='coerce').dropna()
-
-            if series.empty:
-                continue
-
-            col_name = col.lower()
-            if any(token in col_name for token in ['percent', 'percentage', 'share', 'ratio', 'rate']):
-                return True
-
-            if series.between(0, 1).all():
-                total = series.sum()
-                if 0.92 <= total <= 1.08:
-                    return True
-
-            if series.between(0, 100).all():
-                total = series.sum()
-                if 92 <= total <= 108:
-                    return True
-
-        return False
     
-    def _normalize_viz_type(self, viz_type: Optional[str], viz_config: Dict[str, Any]) -> str:
-        """Normalize visualization type hints coming from configuration."""
-
-        candidates = []
-        if viz_type:
-            candidates.append(viz_type)
-
-        for key in (
-            'chart_type',
-            'chart',
-            'type',
-            'preferred_chart',
-            'recommended_chart',
-            'viz_type'
-        ):
-            value = viz_config.get(key)
-            if value:
-                candidates.append(value)
-
-        for candidate in candidates:
-            canonical = self._normalize_single_viz_type(candidate)
-            if canonical:
-                viz_config['visualization_type'] = canonical
-                return canonical
-
-        return 'auto'
-
-    def _normalize_single_viz_type(self, value: Optional[str]) -> Optional[str]:
-        """Map various naming conventions to the engine's canonical chart types."""
-
-        if not value:
-            return None
-
-        normalized = str(value).strip().lower()
-        normalized = normalized.replace('-', ' ').replace('_', ' ')
-        normalized = ' '.join(normalized.split())
-
-        synonym_map = {
-            'number': {
-                'number', 'metric', 'metric card', 'kpi', 'kpi card', 'indicator',
-                'single value', 'value', 'stat', 'statistic'
-            },
-            'bar': {
-                'bar', 'bar chart', 'column', 'column chart', 'vertical bar',
-                'grouped bar', 'stacked bar', 'histogram'
-            },
-            'horizontal_bar': {
-                'horizontal bar', 'horizontal bar chart', 'barh', 'bar h'
-            },
-            'line': {
-                'line', 'line chart', 'line graph', 'time series'
-            },
-            'area': {
-                'area', 'area chart', 'stacked area', 'cumulative area'
-            },
-            'pie': {
-                'pie', 'pie chart'
-            },
-            'donut': {
-                'donut', 'donut chart', 'doughnut', 'doughnut chart', 'ring chart'
-            },
-            'scatter': {
-                'scatter', 'scatter plot', 'bubble', 'bubble chart'
-            },
-            'heatmap': {
-                'heatmap', 'heat map', 'matrix', 'correlation heatmap'
-            },
-            'table': {
-                'table', 'table view', 'data table', 'tabular', 'grid'
-            },
-            'treemap': {
-                'treemap', 'tree map'
-            },
-            'funnel': {
-                'funnel', 'funnel chart', 'conversion funnel'
-            }
-        }
-
-        for canonical, synonyms in synonym_map.items():
-            if normalized == canonical or normalized in synonyms:
-                return canonical
-
-        return None
-
-    def create_visualization(
-        self,
-        data: pd.DataFrame,
-        viz_config: Dict[str, Any],
-        query: str
-    ):
-        """Create visualization based on config and data characteristics"""
+    def create_visualization(self, data: pd.DataFrame, config: Dict[str, Any], query: str):
+        """Create visualization with smart fallbacks"""
         
-        viz_type = viz_config.get('visualization_type', 'auto')
-        viz_type = self._normalize_viz_type(viz_type, viz_config)
-
-        # Auto-detect if not specified or if 'auto'
-        if viz_type == 'auto':
-            viz_type = self._auto_detect_viz_type(data, query, viz_config)
-            viz_config['visualization_type'] = viz_type
-            logger.info(f"🎨 Auto-detected visualization type: {viz_type}")
+        viz_type = config.get('visualization_type', 'auto')
         
-        # Create visualization based on type
+        # Auto-detect if needed
+        if viz_type == 'auto' or not viz_type:
+            viz_type = self._smart_detect_viz_type(data, query, config)
+            config['visualization_type'] = viz_type
+            logger.info(f"🎨 Auto-detected: {viz_type}")
+        
+        # Normalize viz type
+        viz_type = self._normalize_viz_type(viz_type)
+        
+        # Create visualization
         viz_creators = {
             'number': self._create_number_display,
-            'metric': self._create_number_display,
             'kpi': self._create_number_display,
+            'metric': self._create_number_display,
             'bar': self._create_bar_chart,
+            'stacked_bar': self._create_stacked_bar_chart,
             'horizontal_bar': self._create_horizontal_bar,
             'line': self._create_line_chart,
+            'area': self._create_area_chart,
             'pie': self._create_pie_chart,
             'donut': self._create_donut_chart,
             'scatter': self._create_scatter_plot,
-            'area': self._create_area_chart,
             'heatmap': self._create_heatmap,
             'table': self._create_table,
             'treemap': self._create_treemap,
@@ -217,563 +55,725 @@ class VisualizationEngine:
         creator = viz_creators.get(viz_type, self._create_table)
         
         try:
-            return creator(data, viz_config)
+            viz = creator(data, config)
+            logger.info(f"✅ Created {viz_type} visualization")
+            return viz
         except Exception as e:
-            logger.error(f"Error creating {viz_type} visualization: {e}")
+            logger.error(f"❌ Error creating {viz_type}: {e}", exc_info=True)
             # Fallback to table
-            return self._create_table(data, viz_config)
+            return self._create_table(data, config)
     
-    def _analyze_data_profile(self, data: pd.DataFrame) -> Dict[str, Any]:
-        """Analyze dataframe to understand column data types and uniqueness."""
-
-        profile: Dict[str, Any] = {
-            'numeric': [],
-            'categorical': [],
-            'datetime': [],
-            'boolean': [],
-            'unique_counts': {}
+    def _normalize_viz_type(self, viz_type: str) -> str:
+        """Normalize visualization type names"""
+        
+        if not viz_type:
+            return 'table'
+        
+        normalized = viz_type.lower().strip().replace('-', '_').replace(' ', '_')
+        
+        # Map synonyms
+        type_map = {
+            'kpi': 'number',
+            'metric': 'number',
+            'single_value': 'number',
+            'column': 'bar',
+            'vertical_bar': 'bar',
+            'barh': 'horizontal_bar',
+            'time_series': 'line',
+            'trend': 'line',
+            'doughnut': 'donut',
+            'ring': 'donut',
+            'bubble': 'scatter',
+            'data_table': 'table',
+            'grid': 'table'
         }
-
-        for column in data.columns:
-            series = data[column]
-            unique_count = series.nunique(dropna=True)
-            profile['unique_counts'][column] = unique_count
-
-            if self._is_datetime_like_column(series, column):
-                profile['datetime'].append(column)
-                continue
-
-            if pd.api.types.is_bool_dtype(series):
-                profile['boolean'].append(column)
-                profile['categorical'].append(column)
-                continue
-
-            if self._is_numeric_like_series(series):
-                profile['numeric'].append(column)
-                if unique_count <= 8:
-                    profile['categorical'].append(column)
-                continue
-
-            profile['categorical'].append(column)
-
-        return profile
-
-    def _auto_detect_viz_type(
-        self,
-        data: pd.DataFrame,
-        query: str,
-        viz_config: Dict[str, Any]
-    ) -> str:
-        """Intelligently detect the best visualization type."""
-
-        query_lower = query.lower()
+        
+        return type_map.get(normalized, normalized)
+    
+    def _smart_detect_viz_type(self, data: pd.DataFrame, query: str, config: Dict) -> str:
+        """Intelligently detect the best visualization type"""
+        
         n_rows = len(data)
         n_cols = len(data.columns)
-
-        profile = self._analyze_data_profile(data)
-        numeric_cols = list(profile['numeric'])
-        categorical_cols = list(profile['categorical'])
-        datetime_cols = list(profile['datetime'])
-
-        percentage_distribution = self._looks_like_percentage_distribution(data, numeric_cols)
-
-        datetime_hint_columns = [
-            col for col in data.columns
-            if any(token in col.lower() for token in ['date', 'time', 'timestamp', 'day', 'month', 'year', 'week'])
-        ]
-
-        for col in datetime_hint_columns:
-            if col not in datetime_cols and self._is_datetime_like_column(data[col], col):
-                datetime_cols.append(col)
-
-        orientation_hint = str(viz_config.get('orientation', '')).lower()
-        if orientation_hint in {'horizontal', 'h'} and categorical_cols:
-            return 'horizontal_bar'
-        if orientation_hint in {'vertical', 'v'} and categorical_cols:
-            return 'bar'
-
-        # Single value queries (count, sum, average, etc.)
-        if n_rows == 1 and n_cols == 1:
-            return 'number'
+        query_lower = query.lower()
+        
+        # Analyze data types
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        datetime_cols = self._detect_datetime_columns(data)
+        categorical_cols = [col for col in data.columns if col not in numeric_cols + datetime_cols]
+        
+        logger.info(f"📊 Data profile: {n_rows} rows, {n_cols} cols | Numeric: {len(numeric_cols)}, DateTime: {len(datetime_cols)}, Categorical: {len(categorical_cols)}")
+        
+        # Rule 0: Explicit chart type mentions (highest priority)
+        explicit_types = {
+            'pie chart': 'pie',
+            'pie': 'pie',
+            'donut chart': 'donut',
+            'donut': 'donut',
+            'bar chart': 'bar',
+            'bar': 'bar',
+            'line chart': 'line',
+            'line': 'line',
+            'scatter plot': 'scatter',
+            'scatter': 'scatter',
+            'table': 'table',
+            'heatmap': 'heatmap',
+            'treemap': 'treemap'
+        }
+        
+        for keyword, viz_type in explicit_types.items():
+            if keyword in query_lower:
+                logger.info(f"→ Explicit mention '{keyword}' → {viz_type}")
+                return viz_type
+        
+        # Rule 1: Single value displays
         if n_rows == 1 and n_cols <= 3:
+            logger.info("→ Single value detected → number")
             return 'number'
-
-        # Table-specific hints
-        if any(word in query_lower for word in ['table', 'raw data', 'records', 'detailed list', 'tabular', 'export']):
+        
+        # Rule 2: Table for detailed data or many columns
+        table_keywords = ['table', 'list', 'show all', 'details', 'records']
+        if any(kw in query_lower for kw in table_keywords) or n_cols > 6:
+            logger.info("→ Detailed data → table")
             return 'table'
-
-        # Funnel / pipeline style questions
-        if any(word in query_lower for word in ['funnel', 'conversion', 'pipeline', 'stage']):
-            if categorical_cols and numeric_cols:
-                return 'funnel'
-
-        # Treemap / hierarchy
-        if any(word in query_lower for word in ['treemap', 'hierarchy', 'portfolio', 'segments']):
-            if categorical_cols and numeric_cols:
-                return 'treemap'
-
-        # Heatmap / correlation matrix
-        if any(word in query_lower for word in ['heatmap', 'heat map', 'correlation matrix']):
-            if len(numeric_cols) >= 2:
-                return 'heatmap'
-
-        # Time series
-        time_keywords = [
-            'trend', 'over time', 'timeline', 'history', 'evolution', 'time series',
-            'monthly', 'weekly', 'daily', 'yearly', 'per day', 'per month'
-        ]
-        has_time_hint = any(word in query_lower for word in time_keywords)
-        if (has_time_hint or datetime_cols) and numeric_cols:
-            if any(word in query_lower for word in ['cumulative', 'stacked', 'area', 'filled']):
+        
+        # Rule 3: Time series
+        time_keywords = ['trend', 'over time', 'timeline', 'history', 'monthly', 'weekly', 'daily', 'yearly']
+        has_time_hint = any(kw in query_lower for kw in time_keywords)
+        
+        if (datetime_cols or has_time_hint) and numeric_cols:
+            if 'cumulative' in query_lower or 'stacked' in query_lower:
+                logger.info("→ Time series (cumulative) → area")
                 return 'area'
+            logger.info("→ Time series → line")
             return 'line'
-
-        # Composition and percentage focus
-        composition_keywords = [
-            'distribution', 'breakdown', 'composition', 'share', 'percentage',
-            'proportion', 'contribution', 'split', 'share of', 'mix'
-        ]
-        if (
-            (any(word in query_lower for word in composition_keywords) or percentage_distribution)
-            and categorical_cols
-            and numeric_cols
-            and n_rows <= 15
-        ):
-            if any(word in query_lower for word in ['donut', 'doughnut', 'ring']):
-                return 'donut'
-            if percentage_distribution or any(word in query_lower for word in ['percent', 'percentage', 'share']):
-                return 'donut'
-            return 'pie'
-
-        # Ranking / comparison
-        comparison_keywords = ['compare', 'comparison', 'versus', 'vs', 'difference', 'gap', 'benchmark', 'higher', 'lower']
-        ranking_keywords = ['top', 'bottom', 'highest', 'lowest', 'best', 'worst', 'rank', 'ranking', 'leaders', 'laggards']
-        if any(word in query_lower for word in comparison_keywords + ranking_keywords):
-            if categorical_cols and numeric_cols:
-                if 'horizontal' in query_lower or n_rows <= 8:
-                    return 'horizontal_bar'
-                return 'bar'
-
-        # Correlation / relationship
-        correlation_keywords = ['correlation', 'relationship', 'impact', 'influence', 'association']
-        if any(word in query_lower for word in correlation_keywords) and len(numeric_cols) >= 2:
-            if n_rows >= 10:
-                return 'scatter'
-            return 'heatmap'
-
-        # When two numeric series are provided without clear categories, scatter is useful
-        if len(numeric_cols) >= 2 and not categorical_cols:
-            if datetime_cols:
-                return 'line'
-            return 'scatter'
-
-        # Prefer donut/pie for small categorical splits even without explicit keywords
-        if categorical_cols and numeric_cols:
-            if n_rows <= 4:
+        
+        # Rule 4: Distribution/Composition
+        dist_keywords = ['distribution', 'breakdown', 'composition', 'share', 'percentage', 'proportion', 'split']
+        if any(kw in query_lower for kw in dist_keywords):
+            if n_rows <= 8 and categorical_cols and numeric_cols:
+                if 'donut' in query_lower or 'doughnut' in query_lower:
+                    logger.info("→ Distribution (donut) → donut")
+                    return 'donut'
+                logger.info("→ Distribution (small) → pie")
                 return 'pie'
-            if n_rows <= 8 and (percentage_distribution or any(word in query_lower for word in ['share', 'ratio', 'portion'])):
-                return 'donut'
-            if n_rows <= 8:
+            elif n_rows <= 20:
+                logger.info("→ Distribution (medium) → bar")
+                return 'bar'
+        
+        # Rule 4: Comparisons and rankings (enhanced for grouped data)
+        rank_keywords = ['top', 'bottom', 'best', 'worst', 'highest', 'lowest', 'rank', 'compare']
+        dist_keywords = ['distribution', 'breakdown', 'across', 'by location', 'by region', 'by store']
+        
+        if any(kw in query_lower for kw in rank_keywords + dist_keywords):
+            # Check if we have grouped data (store_location, product_category, count)
+            if n_cols >= 3 and categorical_cols and numeric_cols:
+                logger.info("→ Multi-dimensional data with comparison → bar (grouped)")
+                return 'bar'
+            elif n_rows <= 10:
+                logger.info("→ Ranking/comparison (few items) → horizontal_bar")
                 return 'horizontal_bar'
-            if n_rows <= 12:
-                if 'horizontal' in query_lower or n_rows >= 10:
-                    return 'horizontal_bar'
+            elif n_rows <= 30:
+                logger.info("→ Ranking/comparison → bar")
                 return 'bar'
-            if n_rows <= 25:
+            else:
+                logger.info("→ Too many items for ranking → table")
+                return 'table'
+        
+        # Rule 6: Correlation
+        corr_keywords = ['correlation', 'relationship', 'vs', 'versus', 'against']
+        if any(kw in query_lower for kw in corr_keywords) and len(numeric_cols) >= 2:
+            logger.info("→ Correlation → scatter")
+            return 'scatter'
+        
+        # Rule 7: Default based on data shape (improved)
+        if categorical_cols and numeric_cols:
+            if n_rows <= 6:
+                logger.info("→ Few categories → pie")
+                return 'pie'
+            elif n_rows <= 15:
+                logger.info("→ Medium categories → bar")
                 return 'bar'
-
-        # Dataset with a single meaningful metric column
-        if len(numeric_cols) == 1:
-            if n_rows == 1:
-                return 'number'
-            if n_rows <= 8:
+            elif n_rows <= 50:
+                logger.info("→ Many categories → horizontal_bar")
                 return 'horizontal_bar'
-            if n_rows <= 25:
+            else:
+                # For very large datasets, still try bar chart first
+                logger.info("→ Large dataset → bar (will auto-limit)")
                 return 'bar'
-            return 'table'
-
-        # If multiple numerics and manageable size, favor scatter or heatmap
-        if len(numeric_cols) >= 2:
-            if n_rows <= 80:
-                return 'scatter'
-            return 'heatmap'
-
-        # Fallback to table when unsure
+        
+        # Rule 8: Multiple numerics → scatter
+        if len(numeric_cols) >= 2 and n_rows > 5:
+            logger.info("→ Multiple numerics → scatter")
+            return 'scatter'
+        
+        # Rule 9: When in doubt, prefer bar charts over tables for numeric data
+        if numeric_cols and n_rows > 1:
+            logger.info("→ Default with numeric data → bar")
+            return 'bar'
+        
+        # Final fallback
+        logger.info("→ Final fallback → table")
         return 'table'
-
-    def _create_number_display(self, data: pd.DataFrame, config: Dict) -> pn.Column:
-        """Create large number/KPI display."""
-
+    
+    def _detect_datetime_columns(self, data: pd.DataFrame) -> List[str]:
+        """Detect datetime-like columns"""
+        
+        datetime_cols = []
+        
+        for col in data.columns:
+            # Already datetime
+            if pd.api.types.is_datetime64_any_dtype(data[col]):
+                datetime_cols.append(col)
+                continue
+            
+            # Check column name
+            col_lower = col.lower()
+            if any(kw in col_lower for kw in ['date', 'time', 'timestamp', 'day', 'month', 'year']):
+                # Try to parse
+                try:
+                    parsed = pd.to_datetime(data[col].head(20), errors='coerce')
+                    if parsed.notna().sum() / len(parsed) > 0.7:
+                        datetime_cols.append(col)
+                except:
+                    pass
+        
+        return datetime_cols
+    
+    def _create_number_display(self, data: pd.DataFrame, config: Dict) -> pn.pane.HTML:
+        """Create modern KPI display"""
+        
         if len(data) == 1 and len(data.columns) == 1:
             value = data.iloc[0, 0]
             label = data.columns[0]
-        else:
-            return self._create_multi_kpi(data, config)
-
-        if isinstance(value, (int, float)):
-            if abs(value) >= 1_000_000:
-                display_value = f"{value / 1_000_000:.2f}M"
-            elif abs(value) >= 1_000:
-                display_value = f"{value / 1_000:.2f}K"
-            else:
-                display_value = f"{value:,.2f}" if isinstance(value, float) else f"{value:,}"
-        else:
-            display_value = str(value)
-
-        kpi_html = f"""
-        <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-            <div style="color: rgba(255,255,255,0.8); font-size: 18px; font-weight: 500; margin-bottom: 10px;">
-                {label.upper().replace('_', ' ')}
-            </div>
-            <div style="color: white; font-size: 64px; font-weight: bold; font-family: 'Arial Black', sans-serif;">
-                {display_value}
-            </div>
-        </div>
-        """
-
-        return pn.pane.HTML(kpi_html, sizing_mode='stretch_width')
-
-    def _create_multi_kpi(self, data: pd.DataFrame, config: Dict) -> pn.Row:
-        """Create multiple KPI displays."""
-
-        kpis = []
-        for col in data.columns:
-            value = data[col].iloc[0]
-
-            if isinstance(value, (int, float)):
-                if abs(value) >= 1_000_000:
-                    display_value = f"{value / 1_000_000:.2f}M"
-                elif abs(value) >= 1_000:
-                    display_value = f"{value / 1_000:.2f}K"
-                else:
-                    display_value = f"{value:,.0f}" if value == int(value) else f"{value:,.2f}"
-            else:
-                display_value = str(value)
-
-            kpi_html = f"""
-            <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, {self.color_palette[len(kpis) % len(self.color_palette)]} 0%, {self.color_palette[(len(kpis) + 1) % len(self.color_palette)]} 100%);
-                        border-radius: 12px; margin: 5px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
-                <div style="color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 600; margin-bottom: 8px;">
-                    {col.upper().replace('_', ' ')}
-                </div>
-                <div style="color: white; font-size: 42px; font-weight: bold;">
-                    {display_value}
-                </div>
+            
+            display_value = self._format_number(value)
+            
+            html = f"""
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 50px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            ">
+                <div style="
+                    color: rgba(255,255,255,0.9);
+                    font-size: 18px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 15px;
+                ">{label.replace('_', ' ')}</div>
+                <div style="
+                    color: white;
+                    font-size: 72px;
+                    font-weight: 900;
+                    font-family: 'Arial Black', sans-serif;
+                    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                ">{display_value}</div>
             </div>
             """
-            kpis.append(pn.pane.HTML(kpi_html))
-
+            
+            return pn.pane.HTML(html, sizing_mode='stretch_width')
+        
+        # Multiple KPIs
+        return self._create_multi_kpi(data, config)
+    
+    def _create_multi_kpi(self, data: pd.DataFrame, config: Dict) -> pn.Row:
+        """Create multiple KPI cards"""
+        
+        kpis = []
+        colors = [
+            ['#667eea', '#764ba2'],
+            ['#f093fb', '#f5576c'],
+            ['#4facfe', '#00f2fe'],
+            ['#43e97b', '#38f9d7'],
+            ['#fa709a', '#fee140']
+        ]
+        
+        for idx, col in enumerate(data.columns):
+            value = data[col].iloc[0]
+            display_value = self._format_number(value)
+            
+            color_pair = colors[idx % len(colors)]
+            
+            html = f"""
+            <div style="
+                background: linear-gradient(135deg, {color_pair[0]} 0%, {color_pair[1]} 100%);
+                padding: 30px;
+                border-radius: 12px;
+                text-align: center;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+                min-width: 200px;
+            ">
+                <div style="
+                    color: rgba(255,255,255,0.95);
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    margin-bottom: 10px;
+                ">{col.replace('_', ' ')}</div>
+                <div style="
+                    color: white;
+                    font-size: 48px;
+                    font-weight: 900;
+                ">{display_value}</div>
+            </div>
+            """
+            
+            kpis.append(pn.pane.HTML(html))
+        
         return pn.Row(*kpis, sizing_mode='stretch_width')
-
+    
+    def _format_number(self, value) -> str:
+        """Format number for display"""
+        
+        if not isinstance(value, (int, float)):
+            return str(value)
+        
+        if abs(value) >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.2f}B"
+        elif abs(value) >= 1_000_000:
+            return f"{value / 1_000_000:.2f}M"
+        elif abs(value) >= 1_000:
+            return f"{value / 1_000:.2f}K"
+        elif isinstance(value, float):
+            return f"{value:.2f}"
+        else:
+            return f"{value:,}"
+    
     def _create_bar_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create bar chart with smart defaults."""
-
-        x_col = config.get('x_axis') or data.columns[0]
-        y_col = config.get('y_axis') or data.columns[1]
+        """Create modern bar chart with support for grouped data"""
+        
+        # Determine columns
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[-1])  # Last column often has values
+        color_col = config.get('color_by', None)
+        
         title = config.get('title', 'Bar Chart')
-
-        if len(data) > 20:
-            data = data.nlargest(20, y_col)
+        
+        # Check if we have 3+ columns and need grouped bars
+        if len(data.columns) >= 3 and color_col is None:
+            # Auto-detect grouping column (middle column)
+            potential_group_col = data.columns[1] if len(data.columns) > 2 else None
+            if potential_group_col and potential_group_col not in [x_col, y_col]:
+                color_col = potential_group_col
+                logger.info(f"🎨 Detected grouped bar chart: x={x_col}, y={y_col}, color={color_col}")
+        
+        # Find numeric column for y-axis if not specified
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        if y_col not in numeric_cols and numeric_cols:
+            y_col = numeric_cols[0]
+        
+        # Limit to top items if too many (but keep all groups)
+        unique_x = data[x_col].nunique()
+        if unique_x > 20:
+            # Get top x categories by sum of y values
+            top_categories = data.groupby(x_col)[y_col].sum().nlargest(20).index
+            data = data[data[x_col].isin(top_categories)]
             title += " (Top 20)"
-
+        
         fig = px.bar(
             data,
             x=x_col,
             y=y_col,
+            color=color_col,
             title=title,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=px.colors.qualitative.Set3,
+            barmode='group'  # Grouped bars side by side
         )
-
+        
+        fig.update_traces(
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5,
+            opacity=0.9
+        )
+        
         fig.update_layout(
-            height=self.config.chart_height,
+            height=max(500, min(800, len(data) * 15)),  # Dynamic height
             template='plotly_white',
-            hovermode='x unified'
+            hovermode='x unified',
+            title_font_size=20,
+            title_font_color='#2d3748',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_title=x_col.replace('_', ' ').title(),
+            yaxis_title=y_col.replace('_', ' ').title(),
+            legend_title=color_col.replace('_', ' ').title() if color_col else None,
+            xaxis={'categoryorder': 'total descending'}  # Sort by total
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
+    def _create_stacked_bar_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
+        """Create stacked bar chart for multi-category data"""
+        
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[-1])
+        color_col = config.get('color_by', None)
+        
+        # Auto-detect grouping column
+        if len(data.columns) >= 3 and color_col is None:
+            color_col = data.columns[1]
+        
+        title = config.get('title', 'Stacked Bar Chart')
+        
+        # Find numeric column
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        if y_col not in numeric_cols and numeric_cols:
+            y_col = numeric_cols[0]
+        
+        fig = px.bar(
+            data,
+            x=x_col,
+            y=y_col,
+            color=color_col,
+            title=title,
+            color_discrete_sequence=px.colors.qualitative.Set3,
+            barmode='stack'  # Stacked bars
+        )
+        
+        fig.update_traces(
+            marker_line_color='white',
+            marker_line_width=1
+        )
+        
+        fig.update_layout(
+            height=600,
+            template='plotly_white',
+            title_font_size=20,
+            title_font_color='#2d3748',
+            xaxis_title=x_col.replace('_', ' ').title(),
+            yaxis_title=y_col.replace('_', ' ').title(),
+            legend_title=color_col.replace('_', ' ').title() if color_col else None
+        )
+        
+        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
+    
     def _create_horizontal_bar(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create horizontal bar chart."""
-
-        x_col = config.get('y_axis') or data.columns[1]
-        y_col = config.get('x_axis') or data.columns[0]
-        title = config.get('title', 'Horizontal Bar Chart')
-
+        """Create horizontal bar chart"""
+        
+        x_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+        y_col = config.get('x_axis', data.columns[0])
+        title = config.get('title', 'Comparison')
+        
+        # Sort by value
+        data = data.sort_values(by=x_col, ascending=True)
+        
+        # Limit if too many
+        if len(data) > 15:
+            data = data.tail(15)
+            title += " (Top 15)"
+        
         fig = px.bar(
             data,
             x=x_col,
             y=y_col,
             orientation='h',
             title=title,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=['#f093fb']
         )
-
+        
+        fig.update_traces(marker_line_color='rgb(8,48,107)', marker_line_width=1.5, opacity=0.9)
+        
         fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
-        )
-
-        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
-    def _create_pie_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create pie chart."""
-
-        names_col = config.get('x_axis') or data.columns[0]
-        values_col = config.get('y_axis') or data.columns[1]
-        title = config.get('title', 'Distribution')
-
-        if len(data) > 10:
-            top_data = data.nlargest(9, values_col)
-            others_sum = data.nsmallest(len(data) - 9, values_col)[values_col].sum()
-            others = pd.DataFrame({
-                names_col: ['Others'],
-                values_col: [others_sum]
-            })
-            data = pd.concat([top_data, others], ignore_index=True)
-
-        fig = px.pie(
-            data,
-            names=names_col,
-            values=values_col,
-            title=title,
-            color_discrete_sequence=self.color_palette
-        )
-
-        fig.update_traces(
-            textposition='inside',
-            textinfo='percent+label',
-            hovertemplate='<b>%{label}</b><br>Value: %{value}<br>Percentage: %{percent}<extra></extra>'
-        )
-
-        fig.update_layout(
-            height=self.config.chart_height,
+            height=max(400, len(data) * 30),
             template='plotly_white',
-            showlegend=True
+            title_font_size=20,
+            title_font_color='#2d3748',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
-    def _create_donut_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create donut chart."""
-
-        names_col = config.get('x_axis') or data.columns[0]
-        values_col = config.get('y_axis') or data.columns[1]
-        title = config.get('title', 'Distribution')
-
-        fig = px.pie(
-            data,
-            names=names_col,
-            values=values_col,
-            title=title,
-            color_discrete_sequence=self.color_palette,
-            hole=0.4
-        )
-
-        fig.update_traces(
-            textposition='inside',
-            textinfo='percent+label'
-        )
-
-        fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
-        )
-
-        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_line_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create line chart."""
-
-        x_col = config.get('x_axis') or data.columns[0]
-        y_col = config.get('y_axis') or data.columns[1]
+        """Create modern line chart"""
+        
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
         title = config.get('title', 'Trend')
-
-        color_by = config.get('color_by')
+        
+        # Try to convert x to datetime
         plot_data = data.copy()
-
-        if x_col in plot_data.columns:
-            try:
-                converted = pd.to_datetime(plot_data[x_col], errors='coerce', infer_datetime_format=True)
-                if converted.notna().mean() >= 0.6:
-                    plot_data[x_col] = converted
-            except Exception:
-                converted = None
-
-            plot_data = plot_data.dropna(subset=[x_col])
-            if pd.api.types.is_datetime64_any_dtype(plot_data[x_col]):
-                plot_data = plot_data.sort_values(by=x_col)
-
+        try:
+            plot_data[x_col] = pd.to_datetime(plot_data[x_col], errors='coerce')
+            plot_data = plot_data.dropna(subset=[x_col]).sort_values(x_col)
+        except:
+            pass
+        
         fig = px.line(
             plot_data,
             x=x_col,
             y=y_col,
             title=title,
             markers=True,
-            color=color_by if color_by and color_by in plot_data.columns else None,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=['#4facfe']
         )
-
+        
         fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=8)
+            line=dict(width=4),
+            marker=dict(size=10, line=dict(width=2, color='white'))
         )
-
+        
         fig.update_layout(
-            height=self.config.chart_height,
+            height=500,
             template='plotly_white',
-            hovermode='x unified'
+            hovermode='x unified',
+            title_font_size=20,
+            title_font_color='#2d3748',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_area_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create area chart."""
-
-        x_col = config.get('x_axis') or data.columns[0]
-        y_col = config.get('y_axis') or data.columns[1]
-        title = config.get('title', 'Area Chart')
-
-        color_by = config.get('color_by')
+        """Create area chart"""
+        
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+        title = config.get('title', 'Trend')
+        
         plot_data = data.copy()
-
-        if x_col in plot_data.columns:
-            try:
-                converted = pd.to_datetime(plot_data[x_col], errors='coerce', infer_datetime_format=True)
-                if converted.notna().mean() >= 0.6:
-                    plot_data[x_col] = converted
-            except Exception:
-                converted = None
-
-            plot_data = plot_data.dropna(subset=[x_col])
-            if pd.api.types.is_datetime64_any_dtype(plot_data[x_col]):
-                plot_data = plot_data.sort_values(by=x_col)
-
+        try:
+            plot_data[x_col] = pd.to_datetime(plot_data[x_col], errors='coerce')
+            plot_data = plot_data.dropna(subset=[x_col]).sort_values(x_col)
+        except:
+            pass
+        
         fig = px.area(
             plot_data,
             x=x_col,
             y=y_col,
             title=title,
-            color=color_by if color_by and color_by in plot_data.columns else None,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=['#43e97b']
         )
-
+        
+        fig.update_traces(line=dict(width=3))
+        
         fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
+            height=500,
+            template='plotly_white',
+            hovermode='x unified',
+            title_font_size=20,
+            title_font_color='#2d3748'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
+    def _create_pie_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
+        """Create modern pie chart"""
+        
+        # Special case: Single row with multiple numeric columns (e.g., active_count, churned_count, inactive_count)
+        if len(data) == 1 and len(data.columns) > 1:
+            # Check if all columns are numeric
+            numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+            if len(numeric_cols) == len(data.columns):
+                # Transform: columns become categories, values become the data
+                plot_data = pd.DataFrame({
+                    'category': [col.replace('_', ' ').title() for col in data.columns],
+                    'value': data.iloc[0].values
+                })
+                names_col = 'category'
+                values_col = 'value'
+            else:
+                names_col = config.get('x_axis', data.columns[0])
+                values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+                plot_data = data
+        else:
+            names_col = config.get('x_axis', data.columns[0])
+            values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+            plot_data = data
+        
+        title = config.get('title', 'Distribution')
+        
+        # Limit to top items if too many
+        if len(plot_data) > 10:
+            top_data = plot_data.nlargest(9, values_col)
+            others_sum = plot_data.nsmallest(len(plot_data) - 9, values_col)[values_col].sum()
+            others = pd.DataFrame({names_col: ['Others'], values_col: [others_sum]})
+            plot_data = pd.concat([top_data, others], ignore_index=True)
+        
+        fig = px.pie(
+            plot_data,
+            names=names_col,
+            values=values_col,
+            title=title,
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        
+        fig.update_traces(
+            textposition='inside',
+            textinfo='percent+label',
+            textfont_size=14,
+            marker=dict(line=dict(color='white', width=2))
+        )
+        
+        fig.update_layout(
+            height=500,
+            title_font_size=20,
+            title_font_color='#2d3748',
+            showlegend=True
+        )
+        
+        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
+    
+    def _create_donut_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
+        """Create donut chart"""
+        
+        # Special case: Single row with multiple numeric columns
+        if len(data) == 1 and len(data.columns) > 1:
+            numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+            if len(numeric_cols) == len(data.columns):
+                # Transform: columns become categories
+                plot_data = pd.DataFrame({
+                    'category': [col.replace('_', ' ').title() for col in data.columns],
+                    'value': data.iloc[0].values
+                })
+                names_col = 'category'
+                values_col = 'value'
+            else:
+                names_col = config.get('x_axis', data.columns[0])
+                values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+                plot_data = data
+        else:
+            names_col = config.get('x_axis', data.columns[0])
+            values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+            plot_data = data
+        
+        title = config.get('title', 'Distribution')
+        
+        fig = px.pie(
+            plot_data,
+            names=names_col,
+            values=values_col,
+            title=title,
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        
+        fig.update_traces(
+            textposition='inside',
+            textinfo='percent+label',
+            textfont_size=14,
+            marker=dict(line=dict(color='white', width=3))
+        )
+        
+        fig.update_layout(
+            height=500,
+            title_font_size=20,
+            title_font_color='#2d3748',
+            showlegend=True,
+            annotations=[dict(text='Total', x=0.5, y=0.5, font_size=20, showarrow=False)]
+        )
+        
+        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
+    
     def _create_scatter_plot(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create scatter plot."""
-
-        x_col = config.get('x_axis') or data.columns[0]
-        y_col = config.get('y_axis') or data.columns[1]
+        """Create scatter plot"""
+        
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
         title = config.get('title', 'Scatter Plot')
-
-        color_by = config.get('color_by')
-
+        
         fig = px.scatter(
             data,
             x=x_col,
             y=y_col,
-            color=color_by if color_by and color_by in data.columns else None,
             title=title,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=['#667eea'],
+            trendline='ols'
         )
-
-        fig.update_traces(marker=dict(size=10, opacity=0.7))
-
+        
+        fig.update_traces(marker=dict(size=12, opacity=0.7, line=dict(width=1, color='white')))
+        
         fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
+            height=500,
+            template='plotly_white',
+            title_font_size=20,
+            title_font_color='#2d3748'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_heatmap(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create heatmap."""
-
+        """Create heatmap"""
+        
         title = config.get('title', 'Heatmap')
-
-        if data.shape[0] == data.shape[1]:
-            fig = px.imshow(
-                data,
-                title=title,
-                color_continuous_scale='RdBu_r',
-                aspect='auto'
-            )
-        else:
-            fig = px.imshow(
-                data,
-                title=title,
-                color_continuous_scale='Viridis',
-                aspect='auto'
-            )
-
-        fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
+        
+        fig = px.imshow(
+            data,
+            title=title,
+            color_continuous_scale='RdYlBu_r',
+            aspect='auto'
         )
-
+        
+        fig.update_layout(
+            height=500,
+            title_font_size=20,
+            title_font_color='#2d3748'
+        )
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_treemap(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create treemap."""
-
-        labels_col = config.get('x_axis') or data.columns[0]
-        values_col = config.get('y_axis') or data.columns[1]
+        """Create treemap"""
+        
+        labels_col = config.get('x_axis', data.columns[0])
+        values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
         title = config.get('title', 'Treemap')
-
+        
         fig = px.treemap(
             data,
             path=[labels_col],
             values=values_col,
             title=title,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
-
+        
         fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
+            height=500,
+            title_font_size=20,
+            title_font_color='#2d3748'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_funnel_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create funnel chart."""
-
-        x_col = config.get('x_axis') or data.columns[0]
-        y_col = config.get('y_axis') or data.columns[1]
-        title = config.get('title', 'Funnel Chart')
-
+        """Create funnel chart"""
+        
+        x_col = config.get('x_axis', data.columns[0])
+        y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+        title = config.get('title', 'Funnel')
+        
         fig = px.funnel(
             data,
             x=y_col,
             y=x_col,
             title=title,
-            color_discrete_sequence=self.color_palette
+            color_discrete_sequence=['#667eea']
         )
-
+        
         fig.update_layout(
-            height=self.config.chart_height,
-            template='plotly_white'
+            height=500,
+            title_font_size=20,
+            title_font_color='#2d3748'
         )
-
+        
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
-
+    
     def _create_table(self, data: pd.DataFrame, config: Dict) -> pn.widgets.Tabulator:
-        """Create interactive table."""
-
-        display_data = data.head(self.config.max_rows_display)
-
+        """Create modern interactive table"""
+        
         return pn.widgets.Tabulator(
-            display_data,
-            pagination='remote',
+            data,
+            pagination='local',
             page_size=20,
             sizing_mode='stretch_width',
             theme='modern',
             show_index=False,
-            buttons={'Download': '<i class="fa fa-download"></i>'}
+            layout='fit_data_table',
+            header_filters=True
         )

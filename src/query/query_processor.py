@@ -1,4 +1,4 @@
-"""Query Processing Module with LLM Integration and dataset loading."""
+"""Enhanced Query Processing Module with smarter LLM integration and visualization."""
 
 import io
 import json
@@ -8,11 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pyspark.sql import DataFrame, SparkSession
 
@@ -22,11 +18,10 @@ logger = setup_logger(__name__)
 
 
 class QueryProcessor:
-    """Process natural language queries into SQL and visualizations."""
+    """Process natural language queries into SQL and visualizations with enhanced intelligence."""
 
     def __init__(self, config):
         self.config = config
-
         self.spark: Optional[SparkSession] = None
         self.table_name: Optional[str] = None
         self.schema_details: List[str] = []
@@ -39,23 +34,18 @@ class QueryProcessor:
             openai_api_key=config.llm_api_key,
             temperature=config.llm_temperature,
         )
-
         self.parser = StrOutputParser()
-
         self._init_chains()
-
-        logger.info("Query processor initialized")
+        logger.info("Enhanced query processor initialized")
 
     def load_dataset(self, file_bytes: bytes, filename: str) -> Tuple[bool, str]:
         """Load the uploaded dataset into Spark and prepare metadata."""
-
         try:
             extension = Path(filename).suffix.lower()
             if extension not in self.config.supported_file_types:
                 return False, f"Unsupported file type: {extension}"
 
             pandas_df = self._read_with_pandas(file_bytes, extension)
-
             if pandas_df.empty:
                 return False, "Uploaded file contains no rows"
 
@@ -68,15 +58,23 @@ class QueryProcessor:
             self.spark = spark
             self.table_name = table_name
             self.row_count = spark_df.count()
-            self.schema_details = [
-                f"`{table_name}`.`{field.name}` {field.dataType.simpleString()}"
-                for field in spark_df.schema.fields
-            ]
-            self.sample_data = json.dumps(
-                pandas_df.head(self.config.sample_rows_for_llm).to_dict(orient="records"),
-                ensure_ascii=False,
-                indent=2,
-            )
+            
+            # Enhanced schema with data type hints
+            self.schema_details = []
+            for field in spark_df.schema.fields:
+                col_name = field.name
+                col_type = field.dataType.simpleString()
+                
+                # Get sample values for better context
+                samples = spark_df.select(col_name).limit(3).toPandas()[col_name].tolist()
+                sample_str = ", ".join(str(s) for s in samples if s is not None)
+                
+                self.schema_details.append(
+                    f"`{table_name}`.`{col_name}` ({col_type}) - Examples: [{sample_str}]"
+                )
+            
+            # Enhanced sample data
+            self.sample_data = pandas_df.head(self.config.sample_rows_for_llm).to_string(index=False)
 
             logger.info(
                 "Dataset loaded: %s rows • %s columns • table '%s'",
@@ -84,30 +82,29 @@ class QueryProcessor:
                 len(spark_df.columns),
                 table_name,
             )
-
             return True, f"File '{filename}' loaded successfully"
 
-        except Exception as exc:  # pragma: no cover - defensive
+        except Exception as exc:
             logger.error("Failed to load dataset %s: %s", filename, exc, exc_info=True)
             return False, str(exc)
 
     def _get_spark_session(self) -> SparkSession:
-        """Lazily initialise and cache the Spark session."""
-
+        """Lazily initialize and cache the Spark session."""
         if self.spark is not None:
             return self.spark
 
-        logger.info("Initialising Spark session...")
+        logger.info("Initializing Spark session...")
         builder = (
             SparkSession.builder.appName(self.config.spark_app_name)
             .master(self.config.spark_master)
+            .config("spark.sql.adaptive.enabled", "true")
+            .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
         )
 
         if self.config.python_executable:
             builder = (
                 builder.config("spark.pyspark.python", self.config.python_executable)
                 .config("spark.pyspark.driver.python", self.config.python_executable)
-                .config("spark.executorEnv.PYSPARK_PYTHON", self.config.python_executable)
             )
 
         if getattr(self.config, "spark_driver_host", None):
@@ -118,95 +115,17 @@ class QueryProcessor:
         self.spark = spark
         return spark
 
-    def _safe_chain_invoke(
-        self,
-        chain,
-        inputs: Dict[str, Any],
-        stage: str,
-        allow_retry: bool = True
-    ) -> str:
-        """Run an LLM chain with defensive error handling and adaptive retries."""
-
-        try:
-            return chain.invoke(inputs)
-        except Exception as exc:
-            error_message = str(exc)
-
-            if "memory layout cannot be allocated" in error_message:
-                if allow_retry:
-                    logger.warning(
-                        "LLM memory error during %s; retrying with reduced context.",
-                        stage,
-                    )
-                    reduced_inputs = self._reduce_llm_inputs(inputs)
-                    return self._safe_chain_invoke(
-                        chain,
-                        reduced_inputs,
-                        stage,
-                        allow_retry=False,
-                    )
-
-                logger.error(
-                    "LLM chain failed during %s even after context reduction: %s",
-                    stage,
-                    exc,
-                    exc_info=True,
-                )
-                raise RuntimeError(
-                    "LLM service ran out of memory while {stage}. Please retry shortly "
-                    "or simplify the request."
-                ).format(stage=stage) from exc
-
-            logger.error("LLM chain failed during %s: %s", stage, exc, exc_info=True)
-            raise
-
-    def _reduce_llm_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        """Truncate large text fields before retrying an LLM call."""
-
-        limits = {
-            'schema_str': 3000,
-            'sample_data': 2000,
-            'user_query': 1000,
-            'sql_query': 2500,
-            'query_results': 2000,
-            'columns': 1000,
-            'row_count': 100,
-            'table_name': 200,
-        }
-
-        reduced: Dict[str, Any] = {}
-        for key, value in inputs.items():
-            if isinstance(value, str):
-                limit = limits.get(key, 2000)
-                reduced[key] = self._truncate_text(value, limit)
-            else:
-                reduced[key] = value
-
-        return reduced
-
-    @staticmethod
-    def _truncate_text(text: str, limit: int) -> str:
-        """Limit text length while marking truncation for the LLM."""
-
-        if len(text) <= limit:
-            return text
-
-        trimmed = text[:limit].rstrip()
-        return f"{trimmed}\n...[truncated]"
-
     @staticmethod
     def _sanitize_table_name(name: str) -> str:
         """Create a Spark-safe table name from filename."""
-
         sanitized = re.sub(r"[^0-9a-zA-Z_]", "_", name)
-        if not sanitized:
-            sanitized = "data"
+        if not sanitized or sanitized[0].isdigit():
+            sanitized = "table_" + sanitized
         return sanitized.lower()
 
     @staticmethod
     def _read_with_pandas(file_bytes: bytes, extension: str) -> pd.DataFrame:
         """Read uploaded bytes into a pandas DataFrame."""
-
         buffer = io.BytesIO(file_bytes)
 
         if extension == ".csv":
@@ -221,144 +140,188 @@ class QueryProcessor:
         raise ValueError(f"Unsupported file type: {extension}")
     
     def _init_chains(self):
-        """Initialize LangChain chains"""
+        """Initialize enhanced LangChain chains with better prompts."""
         
+        # Enhanced SQL Generation Chain
         sql_system = """You are an expert SQL query generator for Spark SQL.
-Generate precise, optimized queries based on the schema provided.
+Your task is to generate precise, optimized SQL queries based on natural language questions.
 
 CRITICAL RULES:
-1. Return ONLY the SQL query, no explanations or markdown
-2. Use Spark SQL syntax (not MySQL/PostgreSQL)
-3. For date operations: use date_sub(current_date(), N) or date_add()
-4. Always use the table name exactly as provided in the schema
-5. Use simple, clear aliases (A, B, C, etc.)
-6. For COUNT queries, return the count with a meaningful column name
-7. Ensure column names match the schema exactly (case-sensitive)
+1. Return ONLY the SQL query - no explanations, no markdown, no extra text
+2. Use Spark SQL syntax (not MySQL/PostgreSQL specific features)
+3. Always use the exact table name provided in the schema
+4. Column names are case-sensitive - use them exactly as shown
+5. For aggregations, always provide meaningful column aliases
+6. For date operations: use date_sub(), date_add(), current_date()
+7. Order results logically (e.g., by value DESC for rankings)
+8. Limit large result sets appropriately (TOP 10, TOP 20, etc.)
+
+QUERY PATTERNS:
+- "Count X by Y" → SELECT Y, COUNT(*) as count FROM table GROUP BY Y ORDER BY count DESC
+- "Total/Sum of X" → SELECT SUM(X) as total FROM table
+- "Average X" → SELECT AVG(X) as average FROM table
+- "Top N by X" → SELECT * FROM table ORDER BY X DESC LIMIT N
+- "Distribution of X" → SELECT X, COUNT(*) as count FROM table GROUP BY X
+- "Trend over time" → SELECT date_column, SUM(value) as total FROM table GROUP BY date_column ORDER BY date_column
 
 EXAMPLES:
-- "Count customers by status" → SELECT status, COUNT(*) as customer_count FROM table_name GROUP BY status
-- "What is the total revenue?" → SELECT SUM(revenue) as total_revenue FROM table_name
-- "Average age" → SELECT AVG(age) as average_age FROM table_name
+Question: "What is the total revenue?"
+SQL: SELECT SUM(revenue) as total_revenue FROM sales
+
+Question: "Count customers by status"
+SQL: SELECT status, COUNT(*) as customer_count FROM customers GROUP BY status ORDER BY customer_count DESC
+
+Question: "Top 5 products by sales"
+SQL: SELECT product_name, SUM(sales) as total_sales FROM sales GROUP BY product_name ORDER BY total_sales DESC LIMIT 5
 """
         
-        sql_human = """Based on this schema and sample data, write a SQL query for: {user_query}
+        sql_human = """Generate a SQL query for this question:
+
+QUESTION: {user_query}
 
 SCHEMA:
 {schema_str}
+
+TABLE NAME: {table_name}
 
 SAMPLE DATA:
 {sample_data}
 
-TABLE NAME: {table_name}
-
-SQL QUERY:"""
+Return ONLY the SQL query:"""
         
         sql_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(sql_system),
-            HumanMessagePromptTemplate.from_template(sql_human)
+            ("system", sql_system),
+            ("human", sql_human)
         ])
-        
         self.sql_chain = sql_prompt | self.llm | self.parser
         
-        validation_system = """You are a SQL validator for Spark SQL.
-Check if the query is valid and fix any errors.
-Return ONLY the corrected SQL query."""
-        
-        validation_human = """Validate and fix this SQL query if needed:
+        # Enhanced Visualization Recommendation Chain
+        viz_system = """You are a data visualization expert. Analyze the query and results to recommend the BEST chart type.
 
-SCHEMA:
-{schema_str}
+CRITICAL: If the user EXPLICITLY asks for a specific chart type (e.g., "use a pie chart", "show as bar chart"), you MUST recommend that chart type.
 
-SQL QUERY:
-{sql_query}
+VISUALIZATION DECISION TREE:
 
-CORRECTED SQL:"""
-        
-        validation_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(validation_system),
-            HumanMessagePromptTemplate.from_template(validation_human)
-        ])
-        
-        self.validation_chain = validation_prompt | self.llm | self.parser
-        
-        viz_system = """You are a data visualization expert.
-Recommend the BEST visualization for the given query and results.
+1. EXPLICIT REQUEST (HIGHEST PRIORITY):
+   - User says "pie chart" → "pie"
+   - User says "bar chart" → "bar"
+   - User says "line chart" → "line"
+   - User says "table" → "table"
+   - ALWAYS honor explicit requests!
 
-VISUALIZATION TYPES:
-- "number" or "kpi": Single numeric value (counts, totals, averages)
-- "bar": Comparing categories (5-20 items)
-- "pie": Part-to-whole for 3-10 categories
-- "line": Trends over time
-- "scatter": Correlation between two numeric variables
-- "table": Detailed data with many columns or rows
+2. SINGLE VALUE (1 row, 1-3 columns with single value):
+   → "number" - Display as KPI card
 
-DECISION RULES:
-1. Single value (1 row, 1-3 columns) → "number"
-2. Count/Total queries → "number" if single value, else "bar" or "pie"
-3. Distribution/Breakdown with <10 items → "pie"
-4. Distribution/Breakdown with 10+ items → "bar"
-5. Time series → "line"
-6. Correlation → "scatter"
-7. Detailed data → "table"
+3. RATIO/PROPORTION DATA (1 row with multiple count/ratio columns):
+   Examples: "active_count, churned_count, inactive_count" in one row
+   → "pie" - Perfect for showing proportions
+   → "donut" - Alternative for proportions
+
+4. COUNT/AGGREGATE QUERIES:
+   - Single total/count/average → "number"
+   - Breakdown by category (< 8 items) → "pie" or "donut"
+   - Breakdown by category (8-20 items) → "bar"
+   - Breakdown by category (> 20 items) → "horizontal_bar" or "table"
+
+5. TIME SERIES (date/time column + numeric):
+   → "line" - Show trends over time
+   → "area" - For cumulative or stacked trends
+
+6. COMPARISONS:
+   - Few categories (< 8) → "bar" or "horizontal_bar"
+   - Many categories (> 8) → "horizontal_bar" or "table"
+   - Rankings → "horizontal_bar" (best for reading labels)
+
+7. DISTRIBUTIONS/COMPOSITION:
+   - Part-to-whole (< 10 items) → "pie"
+   - Part-to-whole with percentages → "donut"
+   - Distribution across categories (grouped data) → "bar"
+   - Many items → "bar"
+
+8. MULTI-DIMENSIONAL DATA:
+   - Data with 3 columns (category1, category2, value) → "bar" with grouping
+   - Example: store_location, product_category, count → grouped bar chart
+   - Keywords: "across", "by location", "by store", "distribution" → "bar"
+
+8. CORRELATIONS:
+   - Two numeric variables → "scatter"
+   - Multiple variables → "heatmap"
+
+9. HIERARCHIES:
+   - Nested categories + values → "treemap"
+
+10. DETAILED DATA:
+    - Many columns or complex data → "table"
+
+CRITICAL RULES:
+- ALWAYS check if user explicitly requested a chart type first
+- For ratio/proportion queries (e.g., "ratio of X to Y"), use "pie" or "donut"
+- For single row with multiple count columns, use "pie" (columns become slices)
+- Consider query intent: "breakdown", "distribution", "split" → pie/donut preferred
 
 Return ONLY valid JSON:
 {{
-  "visualization_type": "number|bar|pie|line|scatter|table",
+  "visualization_type": "number|bar|horizontal_bar|pie|donut|line|area|scatter|heatmap|treemap|table",
   "title": "Clear, descriptive title",
-  "x_axis": "column_name",
-  "y_axis": "column_name",
-  "description": "Brief insight about the data"
+  "x_axis": "column_name_for_x",
+  "y_axis": "column_name_for_y",
+  "description": "One sentence insight about the data",
+  "reasoning": "Why this chart type was chosen"
 }}"""
         
-        viz_human = """Recommend visualization for:
+        viz_human = """Recommend the best visualization:
 
-USER QUERY: {user_query}
-SQL: {sql_query}
+USER QUESTION: {user_query}
 
-RESULTS (first 5 rows):
+SQL QUERY: {sql_query}
+
+RESULT PREVIEW (first 5 rows):
 {query_results}
 
-Columns: {columns}
-Row count: {row_count}
+METADATA:
+- Columns: {columns}
+- Total Rows: {row_count}
+- Column Types: {column_types}
 
-JSON ONLY:"""
+Analyze and return JSON:"""
         
         viz_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(viz_system),
-            HumanMessagePromptTemplate.from_template(viz_human)
+            ("system", viz_system),
+            ("human", viz_human)
         ])
-        
         self.viz_chain = viz_prompt | self.llm | self.parser
         
         # Error Fix Chain
         error_system = """You are a SQL debugging expert for Spark SQL.
-Fix the SQL query based on the error message.
-Always return a COMPLETE Spark SQL statement that starts with SELECT and can be executed directly.
+Analyze the error and fix the query. Common issues:
+- Column name typos or case sensitivity
+- Missing aggregations in GROUP BY
+- Invalid Spark SQL functions
+- Type mismatches
+
 Return ONLY the corrected SQL query."""
         
         error_human = """Fix this SQL query:
 
-SCHEMA:
-{schema_str}
-
 ORIGINAL QUERY:
 {sql_query}
 
-ERROR:
+ERROR MESSAGE:
 {error_message}
 
-CORRECTED SQL:"""
+SCHEMA:
+{schema_str}
+
+Return corrected SQL:"""
         
         error_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(error_system),
-            HumanMessagePromptTemplate.from_template(error_human)
+            ("system", error_system),
+            ("human", error_human)
         ])
-        
         self.error_chain = error_prompt | self.llm | self.parser
     
     def process_query(self, user_query: str) -> Dict[str, Any]:
-        """Process a natural language query end-to-end."""
-
+        """Process a natural language query end-to-end with enhanced intelligence."""
         if not self.spark or not self.schema_details:
             return {
                 'success': False,
@@ -366,38 +329,32 @@ CORRECTED SQL:"""
             }
 
         try:
+            logger.info("🔍 Processing query: %s", user_query)
+            
             # Step 1: Generate SQL
-            logger.info("🔧 Generating SQL...")
             sql_query = self._generate_sql(user_query)
+            logger.info("📝 Generated SQL: %s", sql_query[:150])
             
-            # Step 2: Validate SQL
-            logger.info("✓ Validating SQL...")
-            sql_query = self._validate_sql(sql_query)
-            logger.info(f" SQL: {sql_query[:100]}...")
-            
-            # Step 3: Execute with auto-fix
-            logger.info("Executing query...")
+            # Step 2: Execute with retry
             result_df = self._execute_with_retry(sql_query)
-            
-            # Convert to pandas
             result_pandas = result_df.toPandas()
             
             if result_pandas.empty:
                 return {
                     'success': False,
-                    'error': 'Query returned no results'
+                    'error': 'Query returned no results. Try rephrasing your question.'
                 }
             
-            logger.info(f" Got {len(result_pandas)} rows, {len(result_pandas.columns)} columns")
+            logger.info("✅ Got %d rows, %d columns", len(result_pandas), len(result_pandas.columns))
             
-            logger.info("Generating visualization...")
+            # Step 3: Smart visualization recommendation
             viz_config = self._recommend_visualization(
                 user_query,
                 sql_query,
                 result_pandas
             )
             
-            logger.info(f" Visualization: {viz_config.get('visualization_type', 'auto')}")
+            logger.info("🎨 Recommended visualization: %s", viz_config.get('visualization_type'))
             
             return {
                 'success': True,
@@ -407,72 +364,54 @@ CORRECTED SQL:"""
             }
             
         except Exception as e:
-            logger.error(f"Query processing failed: {str(e)}", exc_info=True)
+            logger.error("❌ Query processing failed: %s", str(e), exc_info=True)
             return {
                 'success': False,
-                'error': str(e)
+                'error': f"Query processing failed: {str(e)}"
             }
     
     def _generate_sql(self, user_query: str) -> str:
         """Generate SQL from natural language."""
-
-        if not self.schema_details:
-            raise ValueError("Schema details are unavailable. Load data first.")
-
-        table_name = (
-            self.schema_details[0].split('`')[1]
-            if '`' in self.schema_details[0]
-            else self.table_name or 'data'
-        )
-
-        sql = self._safe_chain_invoke(self.sql_chain, {
+        table_name = self.table_name or 'data'
+        
+        sql = self.sql_chain.invoke({
             'user_query': user_query,
             'schema_str': '\n'.join(self.schema_details),
             'sample_data': self.sample_data,
             'table_name': table_name
-        }, 'SQL generation')
+        })
         
+        # Clean up the response
         sql = sql.replace('```sql', '').replace('```', '').strip()
+        sql = re.sub(r'^SQL:\s*', '', sql, flags=re.IGNORECASE)
         
         return sql
     
-    def _validate_sql(self, sql_query: str) -> str:
-        """Validate and fix SQL query."""
-
-        validated = self._safe_chain_invoke(self.validation_chain, {
-            'schema_str': '\n'.join(self.schema_details),
-            'sql_query': sql_query
-        }, 'SQL validation')
-        
-        validated = validated.replace('```sql', '').replace('```', '').strip()
-        
-        return validated
-    
-    def _execute_with_retry(self, sql_query: str):
+    def _execute_with_retry(self, sql_query: str) -> DataFrame:
         """Execute SQL with automatic error fixing."""
-
         spark = self._get_spark_session()
         current_sql = sql_query
 
         for attempt in range(self.config.max_retries):
             try:
                 result = spark.sql(current_sql)
+                # Force execution to catch errors
+                _ = result.count()
                 return result
                 
             except Exception as e:
                 error_msg = str(e)
-                logger.warning(f"Attempt {attempt + 1} failed: {error_msg[:100]}...")
+                logger.warning("⚠️ Attempt %d failed: %s", attempt + 1, error_msg[:100])
                 
                 if attempt < self.config.max_retries - 1:
                     # Try to fix the error
-                    current_sql = self._safe_chain_invoke(self.error_chain, {
+                    current_sql = self.error_chain.invoke({
                         'schema_str': '\n'.join(self.schema_details),
                         'sql_query': current_sql,
                         'error_message': error_msg
-                    }, 'SQL error correction')
-                    
+                    })
                     current_sql = current_sql.replace('```sql', '').replace('```', '').strip()
-                    logger.info(f"Retrying with fixed query...")
+                    logger.info("🔄 Retrying with fixed query...")
                 else:
                     raise Exception(f"Failed after {self.config.max_retries} attempts: {error_msg}")
     
@@ -480,65 +419,152 @@ CORRECTED SQL:"""
         self,
         user_query: str,
         sql_query: str,
-        result_data
+        result_data: pd.DataFrame
     ) -> Dict[str, Any]:
-        """Get visualization recommendation from LLM"""
+        """Get smart visualization recommendation with fallback logic."""
+        
+        # Prepare metadata
+        column_types = {
+            col: str(result_data[col].dtype) 
+            for col in result_data.columns
+        }
         
         results_preview = result_data.head(5).to_string(index=False)
         
-        viz_response = self._safe_chain_invoke(self.viz_chain, {
-            'user_query': user_query,
-            'sql_query': sql_query,
-            'query_results': results_preview,
-            'columns': ', '.join(result_data.columns.tolist()),
-            'row_count': len(result_data)
-        }, 'visualization recommendation')
-        
-        # Parse JSON
         try:
-            # Try direct JSON parse
-            viz_config = json.loads(viz_response)
-        except json.JSONDecodeError:
-            # Try to extract JSON from response
-            start_idx = viz_response.find('{')
-            end_idx = viz_response.rfind('}') + 1
+            viz_response = self.viz_chain.invoke({
+                'user_query': user_query,
+                'sql_query': sql_query,
+                'query_results': results_preview,
+                'columns': ', '.join(result_data.columns.tolist()),
+                'row_count': len(result_data),
+                'column_types': json.dumps(column_types, indent=2)
+            })
             
-            if start_idx >= 0 and end_idx > start_idx:
-                json_str = viz_response[start_idx:end_idx]
-                try:
-                    viz_config = json.loads(json_str)
-                except:
-                    viz_config = self._fallback_viz_config(result_data, user_query)
-            else:
-                viz_config = self._fallback_viz_config(result_data, user_query)
+            # Parse JSON response
+            viz_config = self._parse_viz_response(viz_response)
+            
+        except Exception as e:
+            logger.warning("⚠️ LLM viz recommendation failed, using fallback: %s", str(e))
+            viz_config = self._fallback_viz_config(result_data, user_query)
         
         # Validate and set defaults
-        if 'visualization_type' not in viz_config:
-            viz_config['visualization_type'] = 'auto'
-        
-        if 'title' not in viz_config:
-            viz_config['title'] = 'Analysis Results'
-        
-        # Set axis defaults
-        if len(result_data.columns) >= 2:
-            if 'x_axis' not in viz_config:
-                viz_config['x_axis'] = result_data.columns[0]
-            if 'y_axis' not in viz_config:
-                viz_config['y_axis'] = result_data.columns[1]
+        viz_config = self._validate_viz_config(viz_config, result_data)
         
         return viz_config
     
-    def _fallback_viz_config(self, data, query: str) -> Dict[str, Any]:
-        """Fallback visualization configuration"""
+    def _parse_viz_response(self, response: str) -> Dict[str, Any]:
+        """Parse LLM response to extract visualization config."""
+        try:
+            # Try direct JSON parse
+            return json.loads(response)
+        except json.JSONDecodeError:
+            # Extract JSON from text
+            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group(0))
+                except:
+                    pass
+            
+            # Last resort: extract key fields manually
+            config = {}
+            
+            # Extract visualization_type
+            type_match = re.search(r'"visualization_type"\s*:\s*"([^"]+)"', response)
+            if type_match:
+                config['visualization_type'] = type_match.group(1)
+            
+            # Extract title
+            title_match = re.search(r'"title"\s*:\s*"([^"]+)"', response)
+            if title_match:
+                config['title'] = title_match.group(1)
+            
+            return config
+    
+    def _validate_viz_config(self, config: Dict[str, Any], data: pd.DataFrame) -> Dict[str, Any]:
+        """Validate and complete visualization configuration."""
         
-        config = {
-            'visualization_type': 'auto',
-            'title': 'Analysis Results',
-            'description': 'Data analysis complete'
-        }
+        # Ensure required fields
+        if 'visualization_type' not in config or not config['visualization_type']:
+            config['visualization_type'] = 'auto'
         
-        if len(data.columns) >= 2:
+        if 'title' not in config:
+            config['title'] = 'Analysis Results'
+        
+        # Set axis defaults if not specified
+        if len(data.columns) >= 1 and 'x_axis' not in config:
             config['x_axis'] = data.columns[0]
+        
+        if len(data.columns) >= 2 and 'y_axis' not in config:
             config['y_axis'] = data.columns[1]
         
+        if 'description' not in config:
+            config['description'] = f"Analysis of {len(data)} records"
+        
         return config
+    
+    def _fallback_viz_config(self, data: pd.DataFrame, query: str) -> Dict[str, Any]:
+        """Intelligent fallback visualization configuration."""
+        
+        n_rows = len(data)
+        n_cols = len(data.columns)
+        
+        # Single value
+        if n_rows == 1 and n_cols <= 3:
+            return {
+                'visualization_type': 'number',
+                'title': 'Result',
+                'description': 'Single value result'
+            }
+        
+        # Detect numeric columns
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        
+        # Time series keywords
+        time_keywords = ['trend', 'over time', 'timeline', 'history', 'monthly', 'weekly', 'daily']
+        if any(kw in query.lower() for kw in time_keywords) and numeric_cols:
+            return {
+                'visualization_type': 'line',
+                'title': 'Trend Analysis',
+                'x_axis': data.columns[0],
+                'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
+                'description': 'Time series visualization'
+            }
+        
+        # Distribution/breakdown
+        dist_keywords = ['distribution', 'breakdown', 'by', 'each', 'per']
+        if any(kw in query.lower() for kw in dist_keywords):
+            if n_rows <= 8:
+                return {
+                    'visualization_type': 'pie',
+                    'title': 'Distribution',
+                    'x_axis': data.columns[0],
+                    'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
+                    'description': 'Distribution breakdown'
+                }
+            else:
+                return {
+                    'visualization_type': 'bar',
+                    'title': 'Comparison',
+                    'x_axis': data.columns[0],
+                    'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
+                    'description': 'Category comparison'
+                }
+        
+        # Default based on data shape
+        if n_rows <= 20 and numeric_cols:
+            return {
+                'visualization_type': 'bar',
+                'title': 'Analysis Results',
+                'x_axis': data.columns[0],
+                'y_axis': numeric_cols[0],
+                'description': f'Analysis of {n_rows} records'
+            }
+        
+        # Fallback to table
+        return {
+            'visualization_type': 'table',
+            'title': 'Data Table',
+            'description': f'Detailed view of {n_rows} records'
+        }

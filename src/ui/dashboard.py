@@ -1,12 +1,11 @@
-"""
-Main Dashboard UI for DataWhisperer
-Save this as: src/ui/dashboard.py
-"""
 
+import threading
+from datetime import datetime
 from pathlib import Path
+
 import panel as pn
 import param
-from typing import Optional
+
 from src.query.query_processor import QueryProcessor
 from src.visualization.viz_engine import VisualizationEngine
 from src.utils.logger import setup_logger
@@ -15,9 +14,7 @@ logger = setup_logger(__name__)
 
 
 class DataWhispererDashboard(param.Parameterized):
-    """Main dashboard for DataWhisperer application"""
     
-    # State parameters
     data_loaded = param.Boolean(default=False)
     processing = param.Boolean(default=False)
     
@@ -25,11 +22,9 @@ class DataWhispererDashboard(param.Parameterized):
         super().__init__(**params)
         self.config = config
         
-        # Initialize components
         self.query_processor = QueryProcessor(config)
         self.viz_engine = VisualizationEngine(config)
         
-        # UI components
         self.file_input = None
         self.query_input = None
         self.submit_button = None
@@ -37,148 +32,246 @@ class DataWhispererDashboard(param.Parameterized):
         self.status_indicator = None
         self.schema_display = None
         self.results_column = None
+        self.stats_row = None
         
-        # Query history
         self.query_history = []
         
-        logger.info("Dashboard initialized")
+        logger.info("✨ Modern dashboard initialized")
     
     def _create_header(self):
-        """Create modern dashboard header"""
-        header_style = {
-            'background': 'linear-gradient(135deg, #1a237e 0%, #283593 100%)',
-            'color': 'white',
-            'padding': '25px',
-            'border-radius': '8px',
-            'box-shadow': '0 4px 6px rgba(0,0,0,0.1)',
-            'margin-bottom': '20px'
-        }
         
-        return pn.Row(
-            pn.pane.PNG('https://img.icons8.com/color/96/000000/data-configuration.png', width=80, height=80),
-            pn.Column(
-                pn.pane.Markdown(
-                    "<h1 style='color: white; margin: 0; font-weight: 600;'>DataWhisperer</h1>"
-                ),
-                pn.pane.Markdown(
-                    "<h3 style='color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-weight: 400;'>AI-Powered Data Analysis Dashboard</h3>"
-                ),
-                margin=(10, 0, 0, 15)
-            ),
-            styles=header_style,
-            sizing_mode='stretch_width'
+        header_html = """
+        <div style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        ">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="
+                    background: rgba(255,255,255,0.2);
+                    padding: 15px;
+                    border-radius: 12px;
+                    backdrop-filter: blur(10px);
+                ">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" 
+                              fill="white" opacity="0.9"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 style="
+                        color: white;
+                        margin: 0;
+                        font-size: 36px;
+                        font-weight: 700;
+                        letter-spacing: -0.5px;
+                    ">DataWhisperer</h1>
+                    <p style="
+                        color: rgba(255,255,255,0.9);
+                        margin: 5px 0 0 0;
+                        font-size: 16px;
+                        font-weight: 400;
+                    ">🤖 AI-Powered Dashboard Generation</p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        return pn.pane.HTML(header_html, sizing_mode='stretch_width')
+    
+    def _create_stats_row(self):
+        """Create stats display for loaded data"""
+        
+        self.stats_row = pn.Row(
+            visible=False,
+            sizing_mode='stretch_width',
+            margin=(0, 0, 20, 0)
         )
+        
+        return self.stats_row
+    
+    def _update_stats(self):
+        """Update statistics display"""
+        
+        if not self.query_processor.table_name:
+            self.stats_row.visible = False
+            return
+        
+        stats_html = f"""
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div style="
+                flex: 1;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 20px;
+                border-radius: 10px;
+                color: white;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📊 Dataset</div>
+                <div style="font-size: 24px; font-weight: 700;">{self.query_processor.table_name}</div>
+            </div>
+            <div style="
+                flex: 1;
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                padding: 20px;
+                border-radius: 10px;
+                color: white;
+                box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📝 Rows</div>
+                <div style="font-size: 24px; font-weight: 700;">{self.query_processor.row_count:,}</div>
+            </div>
+            <div style="
+                flex: 1;
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                padding: 20px;
+                border-radius: 10px;
+                color: white;
+                box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🔢 Columns</div>
+                <div style="font-size: 24px; font-weight: 700;">{len(self.query_processor.schema_details)}</div>
+            </div>
+            <div style="
+                flex: 1;
+                background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+                padding: 20px;
+                border-radius: 10px;
+                color: white;
+                box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">✅ Status</div>
+                <div style="font-size: 24px; font-weight: 700;">Ready</div>
+            </div>
+        </div>
+        """
+        
+        self.stats_row.clear()
+        self.stats_row.append(pn.pane.HTML(stats_html, sizing_mode='stretch_width'))
+        self.stats_row.visible = True
     
     def _create_upload_section(self):
         """Create modern file upload section"""
+        
         self.file_input = pn.widgets.FileInput(
-            name='Upload Data File',
             accept=','.join(self.config.supported_file_types),
-            align='center',
-            width=300
+            sizing_mode='stretch_width',
+            height=50
         )
         self.file_input.param.watch(self._on_file_upload, 'value')
         
-        upload_icon = pn.pane.HTML(
-            '<i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #5c6bc0; margin: 20px 0;"></i>',
-            align='center'
-        )
+        upload_html = """
+        <div style="
+            background: white;
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.borderColor='#667eea'; this.style.background='#f7fafc';" 
+           onmouseout="this.style.borderColor='#cbd5e0'; this.style.background='white';">
+            <div style="font-size: 48px; margin-bottom: 15px;">📁</div>
+            <h3 style="color: #2d3748; margin: 10px 0;">Drop Your Data File Here</h3>
+            <p style="color: #718096; margin: 10px 0 20px 0;">
+                or click below to browse
+            </p>
+            <div style="
+                display: inline-block;
+                background: #edf2f7;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 13px;
+                color: #4a5568;
+            ">
+                Supported: CSV, Excel (max 100MB)
+            </div>
+        </div>
+        """
         
-        supported_formats = pn.pane.Markdown(
-            "<div style='text-align: center; color: #666;'>"
-            "<h3 style='margin-bottom: 10px;'>Supported Formats</h3>"
-            f"<p style='margin: 0 0 10px 0;'>{', '.join([f'<code>{fmt}</code>' for fmt in self.config.supported_file_types])}</p>"
-            f"<p><strong>Max file size:</strong> {self.config.max_file_size_mb}MB</p>"
-            "</div>"
-        )
-        
-        return pn.Card(
-            pn.Column(
-                upload_icon,
-                pn.Row(
-                    self.file_input,
-                    align='center',
-                    sizing_mode='fixed',
-                    margin=(0, 0, 20, 0)
-                ),
-                supported_formats,
-                align='center',
-                sizing_mode='stretch_width',
-                margin=(0, 20)
-            ),
-            title="📁 UPLOAD YOUR DATA",
-            header_background='#f8f9fa',
-            header_color='#333',
+        return pn.Column(
+            pn.pane.HTML(upload_html, sizing_mode='stretch_width'),
+            self.file_input,
             sizing_mode='stretch_width',
-            styles={
-                'background': '#ffffff',
-                'border': '1px solid #e0e0e0',
-                'border-radius': '8px',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
-            },
             margin=(0, 0, 20, 0)
         )
     
     def _create_schema_section(self):
-        """Create modern schema display section"""
+        """Create collapsible schema display"""
+        
         self.schema_display = pn.pane.Markdown(
-            "<div style='font-size: 0.95em; line-height: 1.6;'><em>No data loaded yet</em></div>",
+            "*Upload a file to see the schema*",
+            styles={'color': '#718096', 'font-style': 'italic'},
             sizing_mode='stretch_width'
         )
         
         return pn.Card(
             self.schema_display,
-            title="🔍 DATA SCHEMA",
+            title="📋 Data Schema",
             collapsed=True,
-            header_background='#f8f9fa',
-            header_color='#333',
-            sizing_mode='stretch_width',
+            collapsible=True,
+            header_background='#f7fafc',
             styles={
-                'background': '#ffffff',
-                'border': '1px solid #e0e0e0',
-                'border-radius': '8px',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
+                'background': 'white',
+                'border': '1px solid #e2e8f0',
+                'border-radius': '10px',
+                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
             },
-            margin=(0, 0, 20, 0)
+            margin=(0, 0, 20, 0),
+            sizing_mode='stretch_width'
         )
     
     def _create_query_section(self):
         """Create modern query input section"""
+        
         self.query_input = pn.widgets.TextAreaInput(
-            name='Ask a question about your data',
-            placeholder='Example: Show me the top 5 customers by revenue\nExample: What is the average order value?\nExample: Count customers by region',
+            placeholder='Ask anything about your data...\n\nExamples:\n• What are the top 5 products by revenue?\n• Show me monthly sales trends\n• Count customers by region',
             height=120,
             disabled=True,
             sizing_mode='stretch_width',
-            styles={'font-size': '1.1em'}
+            styles={
+                'font-size': '16px',
+                'border': '2px solid #e2e8f0',
+                'border-radius': '8px',
+                'padding': '12px'
+            }
         )
         
         self.submit_button = pn.widgets.Button(
-            name='🔍 Analyze Data',
+            name='✨ Analyze',
             button_type='primary',
-            button_style='solid',
-            width=200,
-            height=40,
+            width=150,
+            height=45,
             disabled=True,
-            align='center'
+            styles={
+                'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'border': 'none',
+                'font-size': '16px',
+                'font-weight': '600',
+                'border-radius': '8px',
+                'box-shadow': '0 4px 15px rgba(102, 126, 234, 0.4)'
+            }
         )
         self.submit_button.on_click(self._on_submit_query)
         
         self.clear_button = pn.widgets.Button(
-            name='🗑️ Clear All',
+            name='🗑️ Clear',
             button_type='light',
-            width=150,
-            height=40,
+            width=120,
+            height=45,
             disabled=True,
-            align='center'
+            styles={
+                'border-radius': '8px',
+                'font-size': '14px'
+            }
         )
         self.clear_button.on_click(self._on_clear_results)
         
         self.status_indicator = pn.indicators.LoadingSpinner(
             value=False,
-            size=25,
+            size=30,
             color='primary',
-            bgcolor='light',
             visible=False
         )
         
@@ -189,198 +282,183 @@ class DataWhispererDashboard(param.Parameterized):
             self.status_indicator,
             pn.layout.HSpacer(),
             align='center',
-            margin=(10, 0, 20, 0),
-            sizing_mode='stretch_width'
+            margin=(15, 0)
         )
         
-        examples = pn.Accordion(
-            ("💡 Example Questions", pn.Column(
-                pn.pane.Markdown(
-                    "<div style='font-size: 1em; color: #555; line-height: 1.8;'>"
-                    "<ul style='padding-left: 20px; margin: 0;'>"
-                    "<li>What are the total sales by product category?</li>"
-                    "<li>Show me customers who haven't been contacted in 60 days</li>"
-                    "<li>Calculate the average contract value by industry</li>"
-                    "<li>Count active vs inactive customers</li>"
-                    "<li>What is the distribution of customers across regions?</li>"
-                    "<li>Show me monthly revenue trends for the last year</li>"
-                    "<li>What is the correlation between price and sales volume?</li>"
-                    "<li>Compare this year's sales to last year's</li>"
-                    "</ul>"
-                    "</div>"
-                ),
-                margin=(0, 0, 0, 10)
-            )),
-            active=[],
-            active_header_background='#f8f9fa',
-            header_background='#f1f3f5',
-            header_color='#495057',
-            sizing_mode='stretch_width'
-        )
+        # Smart examples
+        examples_html = """
+        <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-top: 15px;">
+            <h4 style="color: #2d3748; margin: 0 0 15px 0; font-size: 16px;">💡 Smart Query Examples</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #667eea;">
+                    <strong style="color: #667eea;">Aggregations</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
+                        <li>Total sales by category</li>
+                        <li>Average order value</li>
+                        <li>Count of active users</li>
+                    </ul>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #f093fb;">
+                    <strong style="color: #f093fb;">Trends</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
+                        <li>Monthly revenue trend</li>
+                        <li>Sales over time</li>
+                        <li>Daily user growth</li>
+                    </ul>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #4facfe;">
+                    <strong style="color: #4facfe;">Rankings</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
+                        <li>Top 10 customers</li>
+                        <li>Best performing products</li>
+                        <li>Lowest conversion rates</li>
+                    </ul>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #43e97b;">
+                    <strong style="color: #43e97b;">Distributions</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
+                        <li>Customer breakdown by region</li>
+                        <li>Product category distribution</li>
+                        <li>Status percentages</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        """
         
-        return pn.Card(
-            pn.Column(
-                pn.pane.Markdown("<div style='margin: 0 0 15px 0'><h3>🔍 ASK A QUESTION</h3></div>"),
-                self.query_input,
-                button_row,
-                examples,
-                sizing_mode='stretch_width',
-                margin=(0, 20, 15, 20)
-            ),
+        return pn.Column(
+            pn.pane.HTML('<h3 style="color: #2d3748; margin: 0 0 15px 0;">💬 Ask Your Question</h3>'),
+            self.query_input,
+            button_row,
+            pn.pane.HTML(examples_html, sizing_mode='stretch_width'),
             styles={
-                'background': '#ffffff',
-                'border': '1px solid #e0e0e0',
-                'border-radius': '8px',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
+                'background': 'white',
+                'padding': '25px',
+                'border-radius': '12px',
+                'border': '1px solid #e2e8f0',
+                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
             },
-            margin=(0, 0, 20, 0),
-            sizing_mode='stretch_width'
+            sizing_mode='stretch_width',
+            margin=(0, 0, 20, 0)
         )
     
     def _create_results_section(self):
-        """Create modern results display section"""
+        """Create modern results display"""
+        
+        empty_state_html = """
+        <div style="
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px;">📊</div>
+            <h3 style="color: #2d3748; margin: 0 0 10px 0;">Ready to Analyze</h3>
+            <p style="color: #718096; max-width: 500px; margin: 0;">
+                Upload your data and ask questions to generate intelligent visualizations and insights
+            </p>
+        </div>
+        """
+        
         self.results_column = pn.Column(
-            pn.pane.HTML(
-                """
-                <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
-                    <i class="fas fa-chart-line" style="font-size: 48px; color: #adb5bd; margin-bottom: 15px;"></i>
-                    <h3 style="color: #6c757d; margin: 10px 0;">Your Analysis Will Appear Here</h3>
-                    <p style="color: #868e96; max-width: 600px; margin: 0 auto;">
-                        Ask a question about your data to generate visualizations and insights.
-                    </p>
-                </div>
-                """,
-                sizing_mode='stretch_width'
-            ),
-            sizing_mode='stretch_width',
-            min_height=300
+            pn.pane.HTML(empty_state_html, sizing_mode='stretch_width'),
+            sizing_mode='stretch_width'
         )
         
-        return pn.Card(
+        return pn.Column(
+            pn.pane.HTML('<h3 style="color: #2d3748; margin: 0 0 15px 0;">📈 Analysis Results</h3>'),
             self.results_column,
-            title="ANALYSIS RESULTS",
-            header_background='#f8f9fa',
-            header_color='#333',
-            sizing_mode='stretch_width',
             styles={
-                'background': '#ffffff',
-                'border': '1px solid #e0e0e0',
-                'border-radius': '8px',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
-            }
+                'background': 'white',
+                'padding': '25px',
+                'border-radius': '12px',
+                'border': '1px solid #e2e8f0',
+                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
+            },
+            sizing_mode='stretch_width'
         )
     
     def _on_file_upload(self, event):
-        """Handle file upload with improved feedback and error handling"""
+        """Handle file upload with modern feedback"""
+        
         if event.new is None:
             return
         
         try:
-            # Show loading state
             self.status_indicator.visible = True
             self.status_indicator.value = True
             
-            # Disable UI during processing
             self.file_input.disabled = True
             self.query_input.disabled = True
             self.submit_button.disabled = True
             
-            logger.info("Processing uploaded file...")
-            
-            # Check file size
-            max_size_mb = self.config.max_file_size_mb
+            file_name = self.file_input.filename
             file_size_mb = len(event.new) / (1024 * 1024)
             
-            if file_size_mb > max_size_mb:
-                error_msg = f"File size ({file_size_mb:.2f}MB) exceeds maximum allowed size ({max_size_mb}MB)"
-                logger.error(error_msg)
-                pn.state.notifications.error(error_msg, duration=5000)
-                self.file_input.value = None
-                return
-            
-            # Get file info
-            file_name = self.file_input.filename
-            file_extension = Path(file_name).suffix.lower()
-
-            if not file_extension or file_extension not in self.config.supported_file_types:
-                supported = ", ".join(self.config.supported_file_types)
-                error_msg = (
-                    f"Unsupported file type: {file_extension or 'None'}. "
-                    f"Supported types: {supported}"
+            if file_size_mb > self.config.max_file_size_mb:
+                pn.state.notifications.error(
+                    f"File too large ({file_size_mb:.1f}MB). Max: {self.config.max_file_size_mb}MB",
+                    duration=5000
                 )
-                logger.error(error_msg)
-                pn.state.notifications.error(error_msg, duration=5000)
                 self.file_input.value = None
                 return
             
-            # Show processing message
-            processing_msg = f"Analyzing {file_name} ({file_size_mb:.1f} MB)..."
-            pn.state.notifications.info(processing_msg, duration=3000)
+            file_extension = Path(file_name).suffix.lower()
+            if file_extension not in self.config.supported_file_types:
+                pn.state.notifications.error(
+                    f"Unsupported file type: {file_extension}",
+                    duration=5000
+                )
+                self.file_input.value = None
+                return
             
-            # Process the file in a separate thread to avoid blocking the UI
+            pn.state.notifications.info(
+                f"📂 Processing {file_name} ({file_size_mb:.1f}MB)...",
+                duration=3000
+            )
+            
             def process_file():
                 try:
-                    # Load the dataset
                     success, message = self.query_processor.load_dataset(event.new, file_name)
-
+                    
                     if not success:
                         raise ValueError(message)
-
-                    column_count = len(self.query_processor.schema_details)
-                    row_count = self.query_processor.row_count
-
-                    # Update UI on the main thread
+                    
+                    pn.state.execute(lambda: self._update_ui_after_upload(file_name))
+                    
                     pn.state.execute(
-                        lambda: self._update_ui_after_upload(file_name)
+                        lambda: pn.state.notifications.success(
+                            f"✅ {file_name} loaded successfully!",
+                            duration=4000
+                        )
                     )
-
-                    success_msg = (
-                        f"Successfully loaded {file_name} with "
-                        f"{column_count} columns and {row_count:,} rows"
-                    )
-                    logger.info("%s | %s", success_msg, message)
-                    pn.state.execute(
-                        lambda: pn.state.notifications.success(success_msg, duration=4000)
-                    )
-
+                    
                 except Exception as e:
-                    error_msg = f"Error processing {file_name}: {str(e)}"
+                    error_msg = f"Error: {str(e)}"
                     logger.error(error_msg, exc_info=True)
                     pn.state.execute(
                         lambda: pn.state.notifications.error(error_msg, duration=6000)
                     )
+                    pn.state.execute(lambda: setattr(self.file_input, 'value', None))
                     
-                    # Reset file input on error
-                    pn.state.execute(
-                        lambda: setattr(self.file_input, 'value', None)
-                    )
                 finally:
-                    # Re-enable UI elements
-                    pn.state.execute(
-                        lambda: setattr(self.status_indicator, 'visible', False)
-                    )
-                    pn.state.execute(
-                        lambda: setattr(self.status_indicator, 'value', False)
-                    )
-                    pn.state.execute(
-                        lambda: setattr(self.file_input, 'disabled', False)
-                    )
-                    pn.state.execute(
-                        lambda: setattr(self.query_input, 'disabled', False)
-                    )
+                    pn.state.execute(lambda: setattr(self.status_indicator, 'visible', False))
+                    pn.state.execute(lambda: setattr(self.status_indicator, 'value', False))
+                    pn.state.execute(lambda: setattr(self.file_input, 'disabled', False))
+                    pn.state.execute(lambda: setattr(self.query_input, 'disabled', False))
             
-            # Start the file processing in a separate thread
-            import threading
-            thread = threading.Thread(target=process_file)
-            thread.daemon = True
+            thread = threading.Thread(target=process_file, daemon=True)
             thread.start()
             
         except Exception as e:
-            error_msg = f"Unexpected error during file upload: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            pn.state.notifications.error(error_msg, duration=6000)
+            logger.error("Upload error: %s", str(e), exc_info=True)
+            pn.state.notifications.error(f"Upload failed: {str(e)}", duration=6000)
             
-            # Reset UI state on error
             self.status_indicator.visible = False
             self.status_indicator.value = False
             self.file_input.disabled = False
@@ -388,317 +466,257 @@ class DataWhispererDashboard(param.Parameterized):
             self.file_input.value = None
     
     def _update_ui_after_upload(self, file_name: str):
-        """Refresh UI state after a successful dataset upload."""
-
-        logger.info("Dataset '%s' ready for queries", file_name)
+        """Update UI after successful upload"""
+        
         self.data_loaded = True
-
-        if self.schema_display is not None:
-            self.schema_display.object = self._format_schema()
-
-        if self.query_input is not None:
-            self.query_input.disabled = False
-
-        if self.submit_button is not None:
-            self.submit_button.disabled = False
-
-        pn.state.notifications.info(
-            f"{self.query_processor.table_name} is ready for analysis",
-            duration=2500
-        )
-
+        self.schema_display.object = self._format_schema()
+        self.query_input.disabled = False
+        self.submit_button.disabled = False
+        self._update_stats()
+        
+        logger.info("✅ UI updated for dataset: %s", file_name)
     
     def _format_schema(self) -> str:
-        """Format schema information for display"""
+        """Format schema for display"""
+        
         if not self.query_processor.schema_details:
-            return "*No schema information available*"
+            return "*No schema available*"
         
-        md = f"**Table:** {self.query_processor.table_name}\n\n"
-        md += f"**Rows:** {self.query_processor.row_count:,}\n\n"
-        md += "**Columns:**\n\n"
+        md = f"### 📊 Table: `{self.query_processor.table_name}`\n\n"
+        md += f"**Total Rows:** {self.query_processor.row_count:,}\n\n"
+        md += "#### Columns:\n\n"
         
-        for detail in self.query_processor.schema_details:
-            md += f"- {detail}\n"
+        for i, detail in enumerate(self.query_processor.schema_details, 1):
+            md += f"{i}. {detail}\n"
         
         return md
     
     def _on_submit_query(self, event):
-        """Handle query submission with improved visualization and error handling"""
+        """Handle query submission"""
+        
         if self.processing or not self.query_input.value:
             return
         
-        # Set processing state
         self.processing = True
         self.submit_button.disabled = True
         self.status_indicator.visible = True
         self.status_indicator.value = True
-        self.status_indicator.name = "Analyzing..."
         
         query = self.query_input.value.strip()
-
-        if not query:
-            self.processing = False
-            self.submit_button.disabled = False
-            self.status_indicator.visible = False
-            self.status_indicator.value = False
-            self.status_indicator.name = ""
-            return
-
-        logger.info("Processing query: %s", query)
-        pn.state.notifications.info(f"Analyzing: {query}", duration=3000)
-
+        
+        logger.info("🔍 Processing query: %s", query)
+        pn.state.notifications.info(f"🤖 Analyzing: {query[:50]}...", duration=3000)
+        
         def run_query():
-            from datetime import datetime
-
             try:
                 result = self.query_processor.process_query(query)
-
-                if not result or not result.get('success'):
-                    error_msg = (
-                        result.get('error', 'Unknown error from query processor')
-                        if result else 'Received empty response from query processor'
-                    )
-                    raise ValueError(error_msg)
-
-                viz_config = dict(result.get('viz_config', {}))
+                
+                if not result.get('success'):
+                    raise ValueError(result.get('error', 'Query failed'))
+                
+                viz_config = result.get('viz_config', {})
                 data = result.get('data')
                 sql_query = result.get('sql_query', '')
-
+                
                 if data is None:
-                    raise ValueError("Query processor returned no data")
-
+                    raise ValueError("No data returned")
+                
+                # Create visualization
                 try:
-                    viz = self.viz_engine.create_visualization(
-                        data,
-                        viz_config,
-                        query
-                    )
-
-                    if hasattr(viz, 'sizing_mode'):
-                        viz.sizing_mode = 'stretch_width'
-                    if hasattr(viz, 'width'):
-                        viz.width = None
-                    if hasattr(viz, 'height') and viz.height and viz.height > 600:
-                        viz.height = 600
-
+                    viz = self.viz_engine.create_visualization(data, viz_config, query)
                 except Exception as viz_error:
-                    logger.error(
-                        "Error creating visualization: %s",
-                        viz_error,
-                        exc_info=True
-                    )
+                    logger.warning("Viz creation failed, using table: %s", viz_error)
                     viz = pn.widgets.Tabulator(
                         data,
                         pagination='local',
-                        page_size=10,
-                        sizing_mode='stretch_width'
+                        page_size=20,
+                        sizing_mode='stretch_width',
+                        theme='modern'
                     )
-                    viz_config['title'] = f"{viz_config.get('title', 'Results')} (Data Table)"
-
-                success_msg = f"✅ Analysis complete for: {query}"
-
+                
                 def apply_success():
-                    result_card = self._create_result_card(
-                        query,
-                        sql_query,
-                        viz,
-                        viz_config
-                    )
+                    result_card = self._create_result_card(query, sql_query, viz, viz_config)
                     self.results_column.insert(0, result_card)
+                    
                     self.query_history.append({
                         'query': query,
                         'sql': sql_query,
                         'timestamp': datetime.now().isoformat(),
-                        'viz_type': viz_config.get('visualization_type', viz_config.get('chart_type', 'table'))
+                        'viz_type': viz_config.get('visualization_type', 'table')
                     })
+                    
                     self.clear_button.disabled = False
-                    pn.state.notifications.success(success_msg, duration=4000)
-                    logger.info("Successfully processed query: %s", query)
                     self.query_input.value = ""
-
+                    
+                    pn.state.notifications.success(
+                        f"✅ Analysis complete!",
+                        duration=4000
+                    )
+                
                 pn.state.execute(apply_success)
-
+                
             except Exception as exc:
                 error_text = str(exc)
-                logger.error("Error processing query: %s", error_text, exc_info=True)
-
+                logger.error("Query error: %s", error_text, exc_info=True)
+                
                 def apply_error():
-                    error_msg = f"❌ Error processing query: {error_text}"
-                    pn.state.notifications.error(error_msg, duration=6000)
-                    error_card = pn.Card(
-                        pn.Column(
-                            pn.pane.HTML(
-                                '<div style="text-align: center; padding: 20px;">'
-                                '<i class="fas fa-exclamation-triangle" style="font-size: 36px; color: #dc3545; margin-bottom: 15px;"></i>'
-                                '<h3 style="color: #dc3545; margin: 10px 0;">Analysis Failed</h3>'
-                                f'<p style="color: #6c757d;">{error_text}</p>'
-                                '<p style="color: #6c757d; font-size: 0.9em;">Please try rephrasing your question or check the data schema.</p>'
-                                '</div>'
-                            ),
-                            pn.Accordion(
-                                ("📋 View Query", pn.pane.Markdown(f"<div style='background: #f8f9fa; padding: 10px; border-radius: 4px;'><pre><code>{query}</code></pre></div>")),
-                                active=[],
-                                header_background='#f8f9fa',
-                                header_color='#495057',
-                                sizing_mode='stretch_width'
-                            )
-                        ),
-                        styles={
-                            'background': '#fff',
-                            'border': '1px solid #f5c6cb',
-                            'border-radius': '8px',
-                            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
-                        },
-                        margin=(0, 0, 20, 0),
-                        sizing_mode='stretch_width'
-                    )
-                    self.results_column.insert(0, error_card)
+                    error_html = f"""
+                    <div style="
+                        background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+                        border: 2px solid #f5c6cb;
+                        border-radius: 10px;
+                        padding: 25px;
+                        margin-bottom: 20px;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 36px;">⚠️</div>
+                            <div>
+                                <h4 style="color: #721c24; margin: 0;">Analysis Failed</h4>
+                                <p style="color: #721c24; margin: 5px 0 0 0; opacity: 0.8;">{error_text}</p>
+                            </div>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #555;">
+                            <strong>Query:</strong> {query}
+                        </div>
+                    </div>
+                    """
+                    self.results_column.insert(0, pn.pane.HTML(error_html, sizing_mode='stretch_width'))
                     self.clear_button.disabled = False
-
+                    pn.state.notifications.error(f"❌ {error_text[:100]}", duration=6000)
+                
                 pn.state.execute(apply_error)
-
+                
             finally:
                 def reset_ui():
                     self.processing = False
                     self.submit_button.disabled = False
                     self.status_indicator.visible = False
                     self.status_indicator.value = False
-                    self.status_indicator.name = ""
-
+                
                 pn.state.execute(reset_ui)
-
-        import threading
+        
         thread = threading.Thread(target=run_query, daemon=True)
         thread.start()
     
     def _create_result_card(self, query, sql, viz, viz_config):
-        """Create a modern card for displaying results"""
-        # Format the SQL display with syntax highlighting
-        sql_display = pn.pane.Markdown(
-            f"<div style='background: #f8f9fa; border-radius: 6px; padding: 10px;'>"
-            f"<pre style='margin: 0;'><code class='language-sql'>{sql}</code></pre>"
-            "</div>",
-            sizing_mode='stretch_width'
-        )
+        """Create modern result card"""
         
-        # Create collapsible SQL section
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        viz_type = viz_config.get('visualization_type', 'chart')
+        title = viz_config.get('title', 'Results')
+        description = viz_config.get('description', '')
+        
+        # Insight badge
+        insight_html = f"""
+        <div style="
+            background: linear-gradient(135deg, #fff7cd 0%, #ffeaa7 100%);
+            border-left: 4px solid #fdcb6e;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="font-size: 24px;">💡</div>
+                <div>
+                    <strong style="color: #2d3748;">Insight:</strong>
+                    <span style="color: #4a5568;"> {description}</span>
+                </div>
+            </div>
+        </div>
+        """ if description else ""
+        
+        # SQL accordion
         sql_section = pn.Accordion(
-            ("🔍 VIEW GENERATED SQL", sql_display),
+            ("🔍 View Generated SQL", pn.pane.Markdown(
+                f"```sql\n{sql}\n```",
+                sizing_mode='stretch_width'
+            )),
             active=[],
-            header_background='#f1f3f5',
-            header_color='#495057',
-            sizing_mode='stretch_width'
+            header_background='#f7fafc',
+            sizing_mode='stretch_width',
+            styles={'margin-top': '15px'}
         )
         
-        # Format the insight
-        insight = viz_config.get('description', 'Analysis complete')
-        insight_pane = pn.Card(
-            pn.Row(
-                pn.pane.HTML('<i class="fas fa-lightbulb" style="font-size: 24px; color: #ffc107; margin-right: 15px;"></i>'),
-                pn.pane.Markdown(f"<div style='font-size: 1.05em'><strong>Insight:</strong> {insight}</div>"),
-                align='center',
-                margin=(0, 0, 10, 0)
-            ),
-            styles={
-                'background': '#fff8e1',
-                'border': '1px solid #ffe082',
-                'border-radius': '8px',
-                'padding': '15px'
-            },
-            margin=(0, 0, 20, 0),
-            sizing_mode='stretch_width'
-        )
+        # Metadata
+        meta_html = f"""
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #718096;
+        ">
+            <span>🕐 {timestamp}</span>
+            <span>📊 {viz_type.replace('_', ' ').title()}</span>
+            <span>📝 {len(query)} characters</span>
+        </div>
+        """
         
-        # Create the main result card
-        result_card = pn.Card(
-            pn.Column(
-                pn.Row(
-                    pn.pane.HTML('<i class="fas fa-question-circle" style="font-size: 20px; color: #5c6bc0; margin-right: 10px;"></i>'),
-                    pn.pane.Markdown(f"<div style='font-size: 1.1em'><strong>{query}</strong></div>"),
-                    align='center',
-                    margin=(0, 0, 15, 0)
-                ),
-                insight_pane,
-                pn.pane.HTML('<hr style="border-top: 1px solid #e9ecef; margin: 15px 0;">'),
-                viz,
-                pn.pane.HTML('<div style="height: 15px"></div>'),
-                sql_section,
-                sizing_mode='stretch_width',
-                margin=(0, 10, 10, 10)
-            ),
-            title=f"📊 {viz_config.get('title', 'Analysis Result').upper()}",
-            header_background='#f8f9fa',
-            header_color='#333',
+        result_card = pn.Column(
+            pn.pane.HTML(f'<h4 style="color: #2d3748; margin: 0 0 10px 0;">❓ {query}</h4>'),
+            pn.pane.HTML(insight_html) if description else pn.Spacer(height=0),
+            pn.pane.HTML(f'<div style="padding: 10px 0;"><strong style="color: #4a5568;">📈 {title}</strong></div>'),
+            viz,
+            sql_section,
+            pn.pane.HTML(meta_html, sizing_mode='stretch_width'),
             styles={
-                'background': '#ffffff',
-                'border': '1px solid #e0e0e0',
-                'border-radius': '8px',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)',
+                'background': 'white',
+                'padding': '25px',
+                'border-radius': '12px',
+                'border': '1px solid #e2e8f0',
+                'box-shadow': '0 4px 6px rgba(0,0,0,0.1)',
                 'margin-bottom': '20px'
             },
-            sizing_mode='stretch_width',
-            margin=(0, 0, 20, 0)
+            sizing_mode='stretch_width'
         )
         
-        # Add timestamp and action buttons
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        footer = pn.Row(
-            pn.pane.Markdown(
-                f"<div style='color: #6c757d; font-size: 0.85em;'><i class='far fa-clock'></i> {timestamp}</div>",
-                margin=(0, 0, 0, 10)
-            ),
-            pn.layout.HSpacer(),
-            pn.widgets.Button(
-                name='🔄 Refresh',
-                button_type='light',
-                width=100,
-                height=30,
-                margin=(0, 5)
-            ),
-            pn.widgets.Button(
-                name='📥 Export',
-                button_type='light',
-                width=100,
-                height=30,
-                margin=(0, 5)
-            ),
-            align='center',
-            sizing_mode='stretch_width',
-            margin=(0, 10, 10, 10)
-        )
-        
-        return pn.Column(
-            result_card,
-            footer,
-            sizing_mode='stretch_width',
-            margin=(0, 0, 20, 0)
-        )
+        return result_card
     
     def _on_clear_results(self, event):
         """Clear all results"""
+        
         self.results_column.clear()
-        self.results_column.append(
-            pn.pane.Markdown("*Ask a question to see results*")
-        )
+        
+        empty_html = """
+        <div style="
+            text-align: center;
+            padding: 40px;
+            background: #f7fafc;
+            border-radius: 10px;
+            color: #718096;
+        ">
+            <div style="font-size: 48px; margin-bottom: 10px;">🧹</div>
+            <p>Results cleared. Ask another question!</p>
+        </div>
+        """
+        
+        self.results_column.append(pn.pane.HTML(empty_html, sizing_mode='stretch_width'))
         self.query_history.clear()
         self.clear_button.disabled = True
         
+        pn.state.notifications.info("🧹 Results cleared", duration=2000)
         logger.info("Results cleared")
-        pn.state.notifications.info("Results cleared", duration=2000)
     
     def create_app(self):
-        """Create the complete dashboard application"""
-        # Main layout
+        """Create the complete modern application"""
+        
         app = pn.Column(
             self._create_header(),
+            self._create_stats_row(),
             self._create_upload_section(),
             self._create_schema_section(),
             self._create_query_section(),
             self._create_results_section(),
             sizing_mode='stretch_width',
-            styles={'background': '#f5f5f5', 'padding': '20px'}
+            styles={
+                'background': '#f0f4f8',
+                'padding': '30px',
+                'min-height': '100vh'
+            }
         )
         
         return app
