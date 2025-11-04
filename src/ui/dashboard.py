@@ -1,8 +1,3 @@
-"""
-Apple-Inspired Dark Theme Dashboard with Auto-Layout
-Design Philosophy: Clean, Minimal, Functional, Beautiful
-"""
-
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -16,7 +11,6 @@ from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# Custom CSS for Apple-inspired dark theme
 APPLE_DARK_CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
@@ -28,6 +22,16 @@ APPLE_DARK_CSS = """
     body {
         background: #000000;
         color: #f5f5f7;
+    }
+    
+    /* Fix textarea text color - CRITICAL FIX */
+    textarea, input[type="text"], .bk-input {
+        color: #f5f5f7 !important;
+        background: rgba(30, 30, 30, 0.7) !important;
+    }
+    
+    textarea::placeholder, input::placeholder {
+        color: rgba(245, 245, 247, 0.4) !important;
     }
     
     /* Glassmorphism effect */
@@ -94,13 +98,13 @@ class DataWhispererDashboard(param.Parameterized):
         self.clear_button = None
         self.status_indicator = None
         self.schema_display = None
-        self.results_grid = None
+        self.results_container = None  # Changed from results_grid
         self.stats_row = None
         
         self.query_history = []
         self.result_cards = []
         
-        logger.info("✨ Apple-inspired dashboard initialized")
+        logger.info("dashboard initialized")
     
     def _create_header(self):
         """Create minimalist Apple-style header"""
@@ -377,21 +381,25 @@ class DataWhispererDashboard(param.Parameterized):
         )
     
     def _create_query_section(self):
-        """Create minimal query interface"""
+        """Create minimal query interface with FIXED text visibility"""
         
+        # FIXED: Properly styled text area with visible text
         self.query_input = pn.widgets.TextAreaInput(
-            placeholder='Ask anything about your data...',
-            height=80,
+            placeholder='Ask anything about your data... (e.g., "Show me top 10 products by sales")',
+            height=120,  # Increased height for better visibility
             disabled=True,
             sizing_mode='stretch_width',
             styles={
                 'font-size': '16px',
-                'background': 'rgba(30, 30, 30, 0.7)',
-                'border': '1px solid rgba(255, 255, 255, 0.1)',
+                'background': 'rgba(30, 30, 30, 0.9)',  # Darker background
+                'border': '2px solid rgba(255, 255, 255, 0.15)',
                 'border-radius': '16px',
                 'padding': '16px',
-                'color': '#f5f5f7',
-                'backdrop-filter': 'blur(20px)'
+                'color': '#f5f5f7',  # Light text color
+                'backdrop-filter': 'blur(20px)',
+                'resize': 'vertical',  # Allow vertical resize
+                'min-height': '120px',
+                'max-height': '400px'
             }
         )
         
@@ -447,7 +455,7 @@ class DataWhispererDashboard(param.Parameterized):
             margin=(15, 0, 0, 0)
         )
         
-        query_card = f"""
+        query_card = """
         <div class="glass" style="
             padding: 30px;
             border-radius: 20px;
@@ -472,7 +480,7 @@ class DataWhispererDashboard(param.Parameterized):
         )
     
     def _create_results_section(self):
-        """Create auto-layout results grid"""
+        """Create dashboard-style results container (FIXED)"""
         
         empty_state_html = """
         <div style="
@@ -505,9 +513,19 @@ class DataWhispererDashboard(param.Parameterized):
         </div>
         """
         
-        # Use GridSpec for responsive auto-layout
-        self.results_grid = pn.GridSpec(sizing_mode='stretch_width', height=800)
-        self.results_grid[0, :] = pn.pane.HTML(empty_state_html, sizing_mode='stretch_width')
+        # FIXED: Use Column instead of GridSpec
+        self.results_container = pn.Column(
+            pn.pane.HTML(empty_state_html, sizing_mode='stretch_width'),
+            sizing_mode='stretch_width',
+            scroll=True,
+            styles={
+                'background': 'rgba(0, 0, 0, 0.3)',
+                'border-radius': '20px',
+                'padding': '20px',
+                'min-height': '600px',
+                'max-height': '1200px'
+            }
+        )
         
         return pn.Column(
             pn.pane.HTML("""
@@ -517,9 +535,9 @@ class DataWhispererDashboard(param.Parameterized):
                     font-size: 24px;
                     font-weight: 600;
                     letter-spacing: -0.5px;
-                ">Your Insights</h3>
+                ">Your Insights Dashboard</h3>
             """),
-            self.results_grid,
+            self.results_container,
             sizing_mode='stretch_width'
         )
     
@@ -616,7 +634,7 @@ class DataWhispererDashboard(param.Parameterized):
         logger.info("✅ UI updated for dataset: %s", file_name)
     
     def _on_submit_query(self, event):
-        """Handle query submission with auto-layout"""
+        """Handle query submission with support for multiple visualizations"""
         
         if self.processing or not self.query_input.value:
             return
@@ -633,47 +651,127 @@ class DataWhispererDashboard(param.Parameterized):
         
         def run_query():
             try:
-                result = self.query_processor.process_query(query)
+                # Process the query - this now returns a list of results
+                results = self.query_processor.process_query(query)
                 
-                if not result.get('success'):
-                    raise ValueError(result.get('error', 'Query failed'))
+                if not isinstance(results, list):
+                    results = [results]  # Convert single result to list for consistent processing
                 
-                viz_config = result.get('viz_config', {})
-                data = result.get('data')
-                sql_query = result.get('sql_query', '')
+                visualizations = []
+                sql_queries = set()
                 
-                if data is None:
-                    raise ValueError("No data returned")
+                # Track if any queries failed
+                failed_queries = 0
                 
-                # Create visualization
-                try:
-                    viz = self.viz_engine.create_visualization(data, viz_config, query)
-                except Exception as viz_error:
-                    logger.warning("Viz creation failed, using table: %s", viz_error)
-                    viz = pn.widgets.Tabulator(
-                        data,
-                        pagination='local',
-                        page_size=20,
-                        sizing_mode='stretch_width',
-                        theme='midnight'
-                    )
+                for result in results:
+                    if not result.get('success'):
+                        error_msg = result.get('error', 'Unknown error')
+                        logger.warning("Query part failed: %s", error_msg)
+                        
+                        # Add error visualization
+                        visualizations.append({
+                            'success': False,
+                            'error': error_msg,
+                            'query': result.get('query', 'Unknown query')
+                        })
+                        failed_queries += 1
+                        continue
+                    
+                    viz_config = result.get('viz_config', {})
+                    data = result.get('data')
+                    sql_query = result.get('sql_query', '')
+                    
+                    if not data or (hasattr(data, '__len__') and len(data) == 0):
+                        logger.warning("No data returned for a visualization")
+                        visualizations.append({
+                            'success': False,
+                            'error': 'No data returned for this query',
+                            'query': result.get('query', 'Unknown query')
+                        })
+                        failed_queries += 1
+                        continue
+                    
+                    # Create visualization
+                    try:
+                        viz = self.viz_engine.create_visualization(data, viz_config, query)
+                        visualizations.append({
+                            'success': True,
+                            'viz': viz,
+                            'config': viz_config,
+                            'data': data,
+                            'sql_query': sql_query,
+                            'query': result.get('query', query)
+                        })
+                        if sql_query:
+                            sql_queries.add(sql_query)
+                    except Exception as viz_error:
+                        logger.warning("Viz creation failed, using table: %s", viz_error)
+                        try:
+                            viz = pn.widgets.Tabulator(
+                                data,
+                                pagination='local',
+                                page_size=20,
+                                sizing_mode='stretch_width',
+                                theme='midnight'
+                            )
+                            visualizations.append({
+                                'success': True,
+                                'viz': viz,
+                                'config': {'visualization_type': 'table', 'title': 'Data Table'},
+                                'data': data,
+                                'sql_query': sql_query,
+                                'query': result.get('query', query)
+                            })
+                            if sql_query:
+                                sql_queries.add(sql_query)
+                        except Exception as tabulator_error:
+                            logger.error("Failed to create table: %s", tabulator_error)
+                            visualizations.append({
+                                'success': False,
+                                'error': f'Failed to create visualization: {str(tabulator_error)}',
+                                'query': result.get('query', 'Unknown query')
+                            })
+                            failed_queries += 1
+                
+                if len(visualizations) == 0:
+                    raise ValueError("No valid visualizations could be created from the query")
                 
                 def apply_success():
-                    # Add to grid with auto-layout
-                    self._add_to_grid(query, sql_query, viz, viz_config)
+                    # Add all visualizations to dashboard
+                    self._add_to_dashboard(query, visualizations)
                     
-                    self.query_history.append({
-                        'query': query,
-                        'sql': sql_query,
-                        'timestamp': datetime.now().isoformat(),
-                        'viz_type': viz_config.get('visualization_type', 'table')
-                    })
+                    # Add to query history if we have at least one successful visualization
+                    if any(viz.get('success', False) for viz in visualizations):
+                        self.query_history.append({
+                            'query': query,
+                            'sql': '\n\n---\n\n'.join(sql_queries) if sql_queries else '',
+                            'timestamp': datetime.now().isoformat(),
+                            'viz_count': len([v for v in visualizations if v.get('success', False)])
+                        })
                     
                     self.clear_button.disabled = False
                     self.query_input.value = ""
                     self._update_stats()
                     
-                    pn.state.notifications.success("✅ Insight added!", duration=3000)
+                    # Show appropriate success/warning message
+                    success_count = len([v for v in visualizations if v.get('success', False)])
+                    if success_count > 0:
+                        if failed_queries > 0:
+                            pn.state.notifications.warning(
+                                f"⚠️ Added {success_count} visualization{'s' if success_count > 1 else ''} to dashboard "
+                                f"({failed_queries} query{'s' if failed_queries > 1 else ''} failed)",
+                                duration=4000
+                            )
+                        else:
+                            pn.state.notifications.success(
+                                f"✅ Added {success_count} visualization{'s' if success_count > 1 else ''} to dashboard!",
+                                duration=3000
+                            )
+                    else:
+                        pn.state.notifications.error(
+                            "❌ Failed to create any visualizations. Please check your queries and try again.",
+                            duration=5000
+                        )
                 
                 pn.state.execute(apply_success)
                 
@@ -682,7 +780,10 @@ class DataWhispererDashboard(param.Parameterized):
                 logger.error("Query error: %s", error_text, exc_info=True)
                 
                 def apply_error():
-                    pn.state.notifications.error(f"❌ {error_text[:100]}", duration=6000)
+                    pn.state.notifications.error(
+                        f"❌ {error_text[:150]}" + ("..." if len(error_text) > 150 else ""),
+                        duration=8000
+                    )
                 
                 pn.state.execute(apply_error)
                 
@@ -698,46 +799,111 @@ class DataWhispererDashboard(param.Parameterized):
         thread = threading.Thread(target=run_query, daemon=True)
         thread.start()
     
-    def _add_to_grid(self, query, sql, viz, viz_config):
-        """Add result card to auto-layout grid"""
+    def _add_to_dashboard(self, query, visualizations):
+        """Add multiple visualization cards to the dashboard container in a responsive grid"""
         
-        card = self._create_result_card(query, sql, viz, viz_config)
-        self.result_cards.append(card)
+        # Clear previous results if this is a new query
+        if not hasattr(self, 'result_cards'):
+            self.result_cards = []
         
-        # Auto-layout logic: arrange in responsive grid
-        n_cards = len(self.result_cards)
+        # Create cards for each visualization
+        for viz_data in visualizations:
+            if not viz_data.get('success'):
+                # Handle failed queries
+                error_card = pn.Card(
+                    pn.pane.Alert(
+                        f"❌ {viz_data.get('error', 'Failed to process query')}",
+                        alert_type="danger",
+                        margin=(10, 10, 10, 10)
+                    ),
+                    title="Error",
+                    header_background='#2d1a2c',
+                    styles={
+                        'background': 'rgba(45, 26, 44, 0.7)',
+                        'border': '1px solid #ff4d4d',
+                        'border-radius': '8px',
+                        'margin': '10px',
+                        'flex': '1 1 45%',
+                        'min-width': '400px',
+                        'max-width': '100%'
+                    }
+                )
+                self.result_cards.append(error_card)
+                continue
+                
+            viz = viz_data.get('viz')
+            viz_config = viz_data.get('config', {})
+            sql = viz_data.get('sql_query', '')
+            
+            # Create a card for each visualization
+            card = self._create_result_card(
+                viz_data.get('query', query),  # Use individual query if available
+                sql, 
+                viz, 
+                viz_config
+            )
+            self.result_cards.append(card)
         
-        # Clear grid
-        self.results_grid.clear()
+        # Clear and rebuild the dashboard with all cards
+        self.results_container.clear()
         
-        if n_cards == 1:
-            # Single card: full width
-            self.results_grid[0, :] = self.result_cards[0]
-        elif n_cards == 2:
-            # Two cards: side by side
-            self.results_grid[0, :6] = self.result_cards[0]
-            self.results_grid[0, 6:] = self.result_cards[1]
-        elif n_cards == 3:
-            # Three cards: 2 top, 1 bottom
-            self.results_grid[0, :6] = self.result_cards[0]
-            self.results_grid[0, 6:] = self.result_cards[1]
-            self.results_grid[1, :] = self.result_cards[2]
-        elif n_cards == 4:
-            # Four cards: 2x2 grid
-            self.results_grid[0, :6] = self.result_cards[0]
-            self.results_grid[0, 6:] = self.result_cards[1]
-            self.results_grid[1, :6] = self.result_cards[2]
-            self.results_grid[1, 6:] = self.result_cards[3]
+        if not self.result_cards:
+            # Show empty state
+            empty_html = """
+            <div style="text-align: center; padding: 60px;">
+                <p style="color: rgba(245, 245, 247, 0.6);">No insights yet</p>
+            </div>
+            """
+            self.results_container.append(pn.pane.HTML(empty_html, sizing_mode='stretch_width'))
         else:
-            # 5+ cards: keep adding in grid pattern
-            row = 0
-            col = 0
+            # Create a responsive grid layout
+            grid = pn.GridSpec(
+                ncols=2,  # Default to 2 columns
+                nrows=0,  # Auto-rows
+                sizing_mode='stretch_both',
+                margin=10,
+                width_policy='max',
+                height_policy='auto',
+                align='start',
+                css_classes=['dashboard-grid']
+            )
+            
+            # Add cards to grid
             for i, card in enumerate(self.result_cards):
-                if i % 2 == 0:
-                    self.results_grid[row, :6] = card
-                else:
-                    self.results_grid[row, 6:] = card
-                    row += 1
+                row = i // 2
+                col = i % 2
+                grid[row, col] = card
+            
+            # Add CSS for responsive grid
+            grid_styles = """
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+                gap: 20px;
+                padding: 10px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+            @media (max-width: 1100px) {
+                .dashboard-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            
+            .dashboard-grid > * {
+                min-height: 300px;
+                transition: all 0.3s ease;
+            }
+            """
+            
+            # Add styles to the document
+            pn.pane.HTML(
+                f"<style>{grid_styles}</style>",
+                sizing_mode='stretch_width'
+            ).servable()
+            
+            self.results_container.append(grid)
     
     def _create_result_card(self, query, sql, viz, viz_config):
         """Create minimal Apple-style result card"""
@@ -749,7 +915,7 @@ class DataWhispererDashboard(param.Parameterized):
         
         # Create card with glassmorphism
         card_content = pn.Column(
-            # Header
+            # Header with title and timestamp
             pn.pane.HTML(f"""
                 <div style="
                     padding: 20px 20px 15px 20px;
@@ -759,42 +925,61 @@ class DataWhispererDashboard(param.Parameterized):
                         {timestamp} • {viz_type.replace('_', ' ').title()}
                     </div>
                     <div style="font-size: 16px; font-weight: 600; color: #f5f5f7; line-height: 1.4;">
-                        {query}
+                        {title if title != 'Results' else query}
                     </div>
                 </div>
             """, sizing_mode='stretch_width'),
             
-            # Insight badge (if exists)
-            pn.pane.HTML(f"""
+            # Description (if exists)
+            *([pn.pane.HTML(f"""
                 <div style="
-                    padding: 15px 20px;
-                    background: rgba(0, 122, 255, 0.1);
-                    border-left: 3px solid #007AFF;
-                    margin: 15px 20px;
-                    border-radius: 8px;
+                    padding: 0 20px 15px 20px;
+                    font-size: 14px;
+                    color: rgba(245, 245, 247, 0.8);
+                    line-height: 1.5;
                 ">
-                    <div style="font-size: 13px; color: rgba(245, 245, 247, 0.6); margin-bottom: 4px;">
-                        💡 Insight
-                    </div>
-                    <div style="font-size: 14px; color: #f5f5f7; line-height: 1.5;">
-                        {description}
-                    </div>
+                    {description}
                 </div>
-            """, sizing_mode='stretch_width') if description else pn.Spacer(height=0),
+            """, sizing_mode='stretch_width')] if description else []),
             
-            # Visualization
-            pn.pane.HTML('<div style="padding: 0 20px 20px 20px;">', sizing_mode='stretch_width'),
-            viz,
-            pn.pane.HTML('</div>', sizing_mode='stretch_width'),
+            # Main visualization
+            pn.pane.HTML("<div style='padding: 0 10px;'>", margin=0, sizing_mode='stretch_width'),
+            pn.pane.Pane(viz, sizing_mode='stretch_width'),
+            pn.pane.HTML("</div>", margin=0, sizing_mode='stretch_width'),
             
-            sizing_mode='stretch_width',
+            # SQL toggle (if SQL is available)
+            *([
+                pn.pane.HTML("<div style='margin-top: 15px;'></div>", margin=0, sizing_mode='stretch_width'),
+                pn.Accordion(
+                    ("SQL Query", pn.pane.Markdown(f"```sql\n{sql}\n```")),
+                    active=[],
+                    toggle=True,
+                    sizing_mode='stretch_width',
+                    styles={
+                        'background': 'rgba(30, 30, 30, 0.7)',
+                        'border-radius': '12px',
+                        'margin': '0 10px 10px 10px',
+                        'border': '1px solid rgba(255, 255, 255, 0.05)'
+                    },
+                    header_background='rgba(0, 0, 0, 0.2)',
+                    header_color='rgba(245, 245, 247, 0.8)'
+                )
+            ] if sql else []),
+            
             styles={
                 'background': 'rgba(30, 30, 30, 0.7)',
+                'border-radius': '16px',
                 'border': '1px solid rgba(255, 255, 255, 0.1)',
-                'border-radius': '20px',
-                'backdrop-filter': 'blur(20px)',
-                'overflow': 'hidden'
-            }
+                'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.2)',
+                'overflow': 'hidden',
+                'transition': 'all 0.3s ease',
+                'margin': '0 5px',
+                'flex': '1 1 45%',  # Flex grow and basis for responsive layout
+                'min-width': '400px',  # Minimum width before wrapping
+                'max-width': '100%'   # Ensure it doesn't overflow
+            },
+            sizing_mode='stretch_both',
+            margin=(0, 0, 20, 0)
         )
         
         return card_content
@@ -803,7 +988,7 @@ class DataWhispererDashboard(param.Parameterized):
         """Clear all results"""
         
         self.result_cards.clear()
-        self.results_grid.clear()
+        self.results_container.clear()
         
         empty_html = """
         <div style="
@@ -820,7 +1005,7 @@ class DataWhispererDashboard(param.Parameterized):
         </div>
         """
         
-        self.results_grid[0, :] = pn.pane.HTML(empty_html, sizing_mode='stretch_width')
+        self.results_container.append(pn.pane.HTML(empty_html, sizing_mode='stretch_width'))
         self.query_history.clear()
         self.clear_button.disabled = True
         self._update_stats()

@@ -426,55 +426,165 @@ Return corrected SQL:"""
         ])
         self.error_chain = error_prompt | self.llm | self.parser
     
-    def process_query(self, user_query: str) -> Dict[str, Any]:
-        """Process a natural language query end-to-end with enhanced intelligence."""
-        if not self.spark or not self.schema_details:
-            return {
-                'success': False,
-                'error': 'No dataset loaded. Please upload data first.',
-            }
-
-        try:
-            logger.info("🔍 Processing query: %s", user_query)
+    def _execute_safely(self, func, *args, timeout_seconds=60, **kwargs):
+        """Execute a function with a timeout and return (success, result_or_error)."""
+        import concurrent.futures
+        from concurrent.futures import TimeoutError as FutureTimeoutError
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(func, *args, **kwargs)
+            try:
+                result = future.result(timeout=timeout_seconds)
+                return True, result
+            except FutureTimeoutError:
+                logger.error(f"Query timed out after {timeout_seconds} seconds")
+                return False, f"Query timed out after {timeout_seconds} seconds. Please try a more specific query."
+            except Exception as e:
+                logger.error(f"Error in query execution: {str(e)}", exc_info=True)
+                return False, f"Error: {str(e)}"
+    
+    def _clean_query(self, q: str) -> str:
+        """Clean and normalize a single query."""
+        q = q.strip()
+        if not q:
+            return ""
             
-            # Step 1: Generate SQL
-            sql_query = self._generate_sql(user_query)
+        # Fix common malformed queries
+        if q.startswith('What '):
+            if '?' in q:
+                q = q.split('?', 1)[1].strip()
+            else:
+                q = q[4:].strip()
+        
+        # Remove any remaining leading/trailing punctuation
+        return q.strip(' .,-')
+    
+    def _process_single_query(self, query: str) -> Dict[str, Any]:
+        """Process a single query and return the result."""
+        try:
+            logger.info("🔍 Processing query: %s", query)
+            
+            # Step 1: Generate SQL with timeout
+            success, result = self._execute_safely(
+                self._generate_sql,
+                query,
+                timeout_seconds=30
+            )
+            
+            if not success:
+                return {
+                    'success': False,
+                    'query': query,
+                    'error': result,
+                    'query_type': 'sql_generation'
+                }
+                
+            sql_query = result
             logger.info("📝 Generated SQL: %s", sql_query[:150])
             
-            # Step 2: Execute with retry
-            result_df = self._execute_with_retry(sql_query)
+            # Step 2: Execute with retry and timeout
+            success, result = self._execute_safely(
+                self._execute_with_retry,
+                sql_query,
+                timeout_seconds=120
+            )
+            
+            if not success:
+                return {
+                    'success': False,
+                    'query': query,
+                    'error': result,
+                    'query_type': 'execution',
+                    'sql': sql_query
+                }
+                
+            result_df = result
             result_pandas = result_df.toPandas()
             
             if result_pandas.empty:
                 return {
                     'success': False,
-                    'error': 'Query returned no results. Try rephrasing your question.'
+                    'query': query,
+                    'error': 'Query returned no results. Try rephrasing your question.',
+                    'query_type': 'no_results',
+                    'sql': sql_query
                 }
             
             logger.info("✅ Got %d rows, %d columns", len(result_pandas), len(result_pandas.columns))
             
-            # Step 3: Smart visualization recommendation
-            viz_config = self._recommend_visualization(
-                user_query,
+            # Step 3: Smart visualization recommendation with timeout
+            success, viz_config = self._execute_safely(
+                self._recommend_visualization,
+                query,
                 sql_query,
-                result_pandas
+                result_pandas,
+                timeout_seconds=30
             )
             
-            logger.info("🎨 Recommended visualization: %s", viz_config.get('visualization_type'))
+            if not success:
+                viz_config = self._fallback_viz_config(result_pandas, query)
+                viz_config['error'] = "Visualization recommendation failed: " + str(viz_config)
             
             return {
                 'success': True,
-                'sql_query': sql_query,
-                'data': result_pandas,
-                'viz_config': viz_config
+                'query': query,
+                'sql': sql_query,
+                'data': result_pandas.to_dict('records'),
+                'columns': list(result_pandas.columns),
+                'visualization': viz_config,
+                'row_count': len(result_pandas),
+                'column_count': len(result_pandas.columns)
             }
             
         except Exception as e:
-            logger.error("❌ Query processing failed: %s", str(e), exc_info=True)
+            error_msg = f"Error processing query: {str(e)}"
+            logger.error(error_msg, exc_info=True)
             return {
                 'success': False,
-                'error': f"Query processing failed: {str(e)}"
+                'query': query,
+                'error': error_msg,
+                'query_type': 'unexpected_error'
             }
+    
+    def process_query(self, user_query: str) -> List[Dict[str, Any]]:
+        """Process one or more natural language queries end-to-end with enhanced intelligence.
+        
+        Args:
+            user_query: Single query or multiple queries separated by newlines
+            
+        Returns:
+            List of result dictionaries, one per query
+        """
+        if not self.spark or not self.schema_details:
+            return [{
+                'success': False,
+                'error': 'No dataset loaded. Please upload data first.',
+            }]
+
+        # Split by newlines and clean up queries
+        queries = []
+        for q in user_query.split('\n'):
+            cleaned = self._clean_query(q)
+            if cleaned:
+                queries.append(cleaned)
+                
+        if not queries:
+            return [{
+                'success': False,
+                'error': 'No valid queries found. Please enter at least one question.',
+            }]
+
+        # Process queries sequentially with individual timeouts
+        results = []
+        for query in queries:
+            result = self._process_single_query(query)
+            results.append(result)
+            
+            # If a query fails critically, don't process further
+            if not result.get('success') and result.get('query_type') == 'fatal':
+                break
+                
+        return results
     
     def _generate_sql(self, user_query: str) -> str:
         """Generate SQL from natural language."""

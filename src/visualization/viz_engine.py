@@ -528,117 +528,223 @@ class VisualizationEngine:
     
     def _create_horizontal_bar(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
         """Create horizontal bar chart"""
-        
-        x_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
-        y_col = config.get('x_axis', data.columns[0])
-        title = config.get('title', 'Comparison')
-        
-        # Sort by value
-        data = data.sort_values(by=x_col, ascending=True)
-        
-        # Limit if too many
-        if len(data) > 15:
-            data = data.tail(15)
-            title += " (Top 15)"
-        
-        fig = px.bar(
-            data,
-            x=x_col,
-            y=y_col,
-            orientation='h',
-            title=title,
-            color_discrete_sequence=['#f093fb']
-        )
-        
-        fig.update_traces(marker_line_color='rgb(8,48,107)', marker_line_width=1.5, opacity=0.9)
-        
-        fig.update_layout(
-            height=max(400, len(data) * 30),
-            template='plotly_white',
-            title_font_size=20,
-            title_font_color='#2d3748',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        
-        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
+        try:
+            x_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+            y_col = config.get('x_axis', data.columns[0])
+            title = config.get('title', 'Comparison')
+            
+            # Ensure we have valid data
+            if x_col not in data.columns or y_col not in data.columns:
+                raise ValueError(f"Required columns not found in data. Available columns: {data.columns.tolist()}")
+            
+            # Sort by value
+            data = data.sort_values(by=x_col, ascending=True)
+            
+            # Limit if too many
+            if len(data) > 15:
+                data = data.tail(15)
+                title += " (Top 15)"
+            
+            # Create the figure with error handling
+            try:
+                fig = px.bar(
+                    data,
+                    x=x_col,
+                    y=y_col,
+                    orientation='h',
+                    title=title,
+                    color_discrete_sequence=['#f093fb'],
+                    template='plotly_dark'
+                )
+                
+                fig.update_traces(
+                    marker_line_color='rgba(255, 255, 255, 0.2)',
+                    marker_line_width=1.5,
+                    opacity=0.9
+                )
+                
+                fig.update_layout(
+                    height=max(400, len(data) * 30),
+                    title_font_size=20,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    xaxis_title=x_col.replace('_', ' ').title(),
+                    yaxis_title=y_col.replace('_', ' ').title(),
+                    margin=dict(l=100, r=20, t=60, b=20)
+                )
+                
+                # Apply dark theme
+                fig = self._apply_dark_theme(fig)
+                
+                # Create the Panel component with explicit sizing
+                return pn.pane.Plotly(
+                    fig,
+                    sizing_mode='stretch_width',
+                    height=500,
+                    margin=(10, 20, 10, 20)
+                )
+                
+            except Exception as e:
+                logger.error(f"Error creating horizontal bar chart: {str(e)}", exc_info=True)
+                return self._create_fallback_visualization(data, config, "horizontal_bar", str(e))
+                
+        except Exception as e:
+            logger.error(f"Error in _create_horizontal_bar: {str(e)}", exc_info=True)
+            return self._create_fallback_visualization(data, config, "horizontal_bar", str(e))
     
+    def _create_fallback_visualization(self, data: pd.DataFrame, config: Dict, viz_type: str, error_msg: str) -> pn.pane.Markdown:
+        """Create a fallback visualization when the primary one fails"""
+        error_html = f"""
+        <div style="
+            background: rgba(255, 0, 0, 0.1); 
+            border-left: 4px solid #ff3860; 
+            padding: 1em; 
+            margin: 1em 0; 
+            border-radius: 4px;
+            color: #ff3860;
+        ">
+            <h4>⚠️ Visualization Error</h4>
+            <p>Failed to create {viz_type} visualization: {error_msg}</p>
+            <p>Showing data as a table instead.</p>
+        </div>
+        """
+        
+        # Create a simple table as fallback
+        table = pn.widgets.Tabulator(
+            data.head(50),
+            pagination='local',
+            layout='fit_data_stretch',
+            page_size=10,
+            sizing_mode='stretch_width'
+        )
+        
+        return pn.Column(
+            pn.pane.HTML(error_html, width=800),
+            table,
+            sizing_mode='stretch_width'
+        )
+        
     def _create_line_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
         """Create line chart with support for multiple series and trends"""
+        try:
+            if data.empty:
+                raise ValueError("No data available for visualization")
+                
+            x_col = config.get('x_axis', data.columns[0] if len(data.columns) > 0 else None)
+            y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else None)
+            color_col = config.get('color_by', None)
+            title = config.get('title', 'Trend')
         
-        x_col = config.get('x_axis', data.columns[0])
-        y_col = config.get('y_axis')
-        color_col = config.get('color_by', None)
-        title = config.get('title', 'Trend')
-        
-        # Find numeric and datetime columns
-        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
-        datetime_cols = self._detect_datetime_columns(data)
-        
-        # Auto-detect x-axis (prefer datetime)
-        if datetime_cols and x_col not in datetime_cols:
-            x_col = datetime_cols[0]
-        
-        # Auto-detect y-axis (prefer numeric)
-        if not y_col or y_col not in data.columns:
-            remaining_numeric = [col for col in numeric_cols if col != x_col]
-            y_col = remaining_numeric[0] if remaining_numeric else numeric_cols[0] if numeric_cols else data.columns[-1]
-        
-        # Auto-detect color/grouping column for multi-line
-        if not color_col and len(data.columns) >= 3:
-            categorical_cols = [col for col in data.columns if col not in numeric_cols + datetime_cols]
-            if categorical_cols:
-                color_col = categorical_cols[0]
-                logger.info(f"📊 Multi-line chart detected: grouping by {color_col}")
-        
-        # Prepare data
-        plot_data = data.copy()
-        
-        # Try to convert x to datetime if it looks like dates
-        if x_col in plot_data.columns:
-            try:
-                converted = pd.to_datetime(plot_data[x_col], errors='coerce', infer_datetime_format=True)
-                if converted.notna().mean() >= 0.6:
-                    plot_data[x_col] = converted
-                    logger.info(f"✅ Converted {x_col} to datetime")
-            except Exception as e:
-                logger.warning(f"Could not convert {x_col} to datetime: {e}")
-        
-        # Sort by x column
-        plot_data = plot_data.dropna(subset=[x_col])
-        if pd.api.types.is_datetime64_any_dtype(plot_data[x_col]) or pd.api.types.is_numeric_dtype(plot_data[x_col]):
-            plot_data = plot_data.sort_values(by=x_col)
-        
-        logger.info(f"📈 Line chart: x={x_col}, y={y_col}, color={color_col}")
-        
-        # Create line chart
-        fig = px.line(
-            plot_data,
-            x=x_col,
-            y=y_col,
-            color=color_col,
-            title=title,
-            markers=True,
-            color_discrete_sequence=px.colors.qualitative.Bold
-        )
-        
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=8, line=dict(width=2, color='white'))
-        )
-        
-        fig.update_layout(
-            height=550,
-            hovermode='x unified',
-            xaxis_title=x_col.replace('_', ' ').title(),
-            yaxis_title=y_col.replace('_', ' ').title(),
-            legend_title=color_col.replace('_', ' ').title() if color_col else None
-        )
-        
-        # Apply dark theme
-        fig = self._apply_dark_theme(fig)
-        
-        return pn.pane.Plotly(fig, sizing_mode='stretch_width')
+            # Find numeric and datetime columns
+            numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+            datetime_cols = self._detect_datetime_columns(data)
+            
+            # Auto-detect x-axis (prefer datetime)
+            if datetime_cols and (x_col is None or x_col not in data.columns or x_col not in datetime_cols):
+                x_col = datetime_cols[0]
+            
+            # If still no x_col, use first column
+            if x_col is None or x_col not in data.columns:
+                x_col = data.columns[0] if len(data.columns) > 0 else None
+            
+            # Auto-detect y-axis (prefer numeric)
+            if y_col is None or y_col not in data.columns:
+                remaining_numeric = [col for col in numeric_cols if col != x_col and col in data.columns]
+                y_col = remaining_numeric[0] if remaining_numeric else None
+                
+                # If still no y_col, try to find any numeric column
+                if y_col is None and numeric_cols:
+                    y_col = numeric_cols[0]
+                # If still no y_col, use the next available column
+                elif y_col is None and len(data.columns) > 1:
+                    y_col = data.columns[1] if data.columns[1] != x_col else data.columns[0]
+            
+            # Auto-detect color/grouping column for multi-line
+            if color_col is None and len(data.columns) >= 3:
+                categorical_cols = [col for col in data.columns 
+                                  if col not in [x_col, y_col] 
+                                  and col in data.columns 
+                                  and col not in numeric_cols 
+                                  and col not in datetime_cols]
+                if categorical_cols:
+                    color_col = categorical_cols[0]
+                    logger.info(f"📊 Multi-line chart detected: grouping by {color_col}")
+            
+            # Prepare data
+            plot_data = data.copy()
+            
+            # Ensure required columns exist
+            required_cols = [x_col, y_col] + ([color_col] if color_col else [])
+            missing_cols = [col for col in required_cols if col not in plot_data.columns]
+            if missing_cols:
+                raise ValueError(f"Required columns not found in data: {missing_cols}")
+            
+            # Try to convert x to datetime if it looks like dates
+            if x_col in plot_data.columns and x_col is not None:
+                try:
+                    converted = pd.to_datetime(plot_data[x_col], errors='coerce', infer_datetime_format=True)
+                    if converted.notna().mean() >= 0.6:  # If at least 60% of values converted successfully
+                        plot_data[x_col] = converted
+                        logger.info(f"✅ Converted {x_col} to datetime")
+                except Exception as e:
+                    logger.warning(f"Could not convert {x_col} to datetime: {e}")
+            
+            # Sort by x column if it's datetime or numeric
+            if x_col in plot_data.columns and plot_data[x_col].notna().any():
+                plot_data = plot_data.dropna(subset=[x_col])
+                if pd.api.types.is_datetime64_any_dtype(plot_data[x_col]) or pd.api.types.is_numeric_dtype(plot_data[x_col]):
+                    plot_data = plot_data.sort_values(by=x_col)
+            
+            logger.info(f"📈 Line chart: x={x_col}, y={y_col}, color={color_col}")
+            
+            # Create line chart
+            fig = px.line(
+                plot_data,
+                x=x_col,
+                y=y_col,
+                color=color_col,
+                title=title,
+                markers=True,
+                color_discrete_sequence=px.colors.qualitative.Bold,
+                template='plotly_dark'
+            )
+            
+            fig.update_traces(
+                line=dict(width=2.5),
+                marker=dict(size=6, line=dict(width=1, color='white')),
+                selector=dict(mode='lines+markers')
+            )
+            
+            fig.update_layout(
+                height=500,
+                hovermode='x unified',
+                xaxis_title=x_col.replace('_', ' ').title() if isinstance(x_col, str) else 'X-Axis',
+                yaxis_title=y_col.replace('_', ' ').title() if isinstance(y_col, str) else 'Y-Axis',
+                legend_title=color_col.replace('_', ' ').title() if color_col and isinstance(color_col, str) else None,
+                margin=dict(l=60, r=20, t=60, b=40),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            # Apply dark theme
+            fig = self._apply_dark_theme(fig)
+            
+            # Create the Panel component with explicit sizing
+            return pn.pane.Plotly(
+                fig,
+                sizing_mode='stretch_width',
+                height=550,
+                margin=(10, 20, 10, 20)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in _create_line_chart: {str(e)}", exc_info=True)
+            return self._create_fallback_visualization(data, config, "line_chart", str(e))
     
     def _create_area_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
         """Create area chart"""
@@ -676,27 +782,94 @@ class VisualizationEngine:
     
     def _create_pie_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
         """Create modern pie chart"""
-        
-        # Special case: Single row with multiple numeric columns (e.g., active_count, churned_count, inactive_count)
-        if len(data) == 1 and len(data.columns) > 1:
-            # Check if all columns are numeric
-            numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
-            if len(numeric_cols) == len(data.columns):
-                # Transform: columns become categories, values become the data
-                plot_data = pd.DataFrame({
-                    'category': [col.replace('_', ' ').title() for col in data.columns],
-                    'value': data.iloc[0].values
-                })
-                names_col = 'category'
-                values_col = 'value'
+        try:
+            if data.empty:
+                raise ValueError("No data available for visualization")
+                
+            # Special case: Single row with multiple numeric columns (e.g., active_count, churned_count, inactive_count)
+            if len(data) == 1 and len(data.columns) > 1:
+                # Check if all columns are numeric
+                numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+                if len(numeric_cols) == len(data.columns):
+                    # Transform: columns become categories, values become the data
+                    plot_data = pd.DataFrame({
+                        'category': [str(col).replace('_', ' ').title() for col in data.columns],
+                        'value': data.iloc[0].values
+                    })
+                    names_col = 'category'
+                    values_col = 'value'
+                else:
+                    names_col = config.get('x_axis', data.columns[0] if len(data.columns) > 0 else None)
+                    values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0] if len(data.columns) > 0 else None)
+                    plot_data = data
             else:
-                names_col = config.get('x_axis', data.columns[0])
-                values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+                names_col = config.get('x_axis', data.columns[0] if len(data.columns) > 0 else None)
+                values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0] if len(data.columns) > 0 else None)
                 plot_data = data
-        else:
-            names_col = config.get('x_axis', data.columns[0])
-            values_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
-            plot_data = data
+                
+            # Ensure required columns exist
+            if names_col not in plot_data.columns or values_col not in plot_data.columns:
+                raise ValueError(f"Required columns not found in data. Names: {names_col}, Values: {values_col}")
+                
+            # Limit the number of categories for better readability
+            max_categories = 15
+            if len(plot_data) > max_categories:
+                # Sort by values and take top N-1, group the rest as 'Others'
+                plot_data = plot_data.sort_values(by=values_col, ascending=False)
+                if len(plot_data) > max_categories:
+                    others = pd.DataFrame({
+                        names_col: ['Others'],
+                        values_col: [plot_data[values_col].iloc[max_categories-1:].sum()]
+                    })
+                    plot_data = pd.concat([plot_data.head(max_categories-1), others], ignore_index=True)
+            
+            # Create the pie chart
+            fig = px.pie(
+                plot_data,
+                names=names_col,
+                values=values_col,
+                title=config.get('title', 'Distribution'),
+                hole=0.3 if config.get('visualization_type') == 'donut' else 0,
+                color_discrete_sequence=px.colors.qualitative.Plotly,
+                template='plotly_dark'
+            )
+            
+            fig.update_traces(
+                textposition='inside',
+                textinfo='percent+label',
+                marker=dict(line=dict(color='#000000', width=0.5)),
+                hovertemplate="%{label}<br>%{value}<br>%{percent}",
+                sort=False
+            )
+            
+            fig.update_layout(
+                height=500,
+                margin=dict(l=20, r=20, t=60, b=20),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                uniformtext_minsize=12,
+                uniformtext_mode='hide'
+            )
+            
+            # Apply dark theme
+            fig = self._apply_dark_theme(fig)
+            
+            # Create the Panel component with explicit sizing
+            return pn.pane.Plotly(
+                fig,
+                sizing_mode='stretch_width',
+                height=500,
+                margin=(10, 20, 10, 20)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in _create_pie_chart: {str(e)}", exc_info=True)
+            return self._create_fallback_visualization(data, config, "pie_chart", str(e))
         
         title = config.get('title', 'Distribution')
         
