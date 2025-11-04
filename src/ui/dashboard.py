@@ -1,3 +1,7 @@
+"""
+Apple-Inspired Dark Theme Dashboard with Auto-Layout
+Design Philosophy: Clean, Minimal, Functional, Beautiful
+"""
 
 import threading
 from datetime import datetime
@@ -12,8 +16,67 @@ from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+# Custom CSS for Apple-inspired dark theme
+APPLE_DARK_CSS = """
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+        background: #000000;
+        color: #f5f5f7;
+    }
+    
+    /* Glassmorphism effect */
+    .glass {
+        background: rgba(30, 30, 30, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Smooth animations */
+    .smooth-transition {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Hide default panel styling */
+    .bk-root {
+        background: transparent !important;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+</style>
+"""
+
 
 class DataWhispererDashboard(param.Parameterized):
+    """Apple-inspired dark theme dashboard with auto-layout"""
     
     data_loaded = param.Boolean(default=False)
     processing = param.Boolean(default=False)
@@ -31,119 +94,191 @@ class DataWhispererDashboard(param.Parameterized):
         self.clear_button = None
         self.status_indicator = None
         self.schema_display = None
-        self.results_column = None
+        self.results_grid = None
         self.stats_row = None
         
         self.query_history = []
+        self.result_cards = []
         
-        logger.info("✨ Modern dashboard initialized")
+        logger.info("✨ Apple-inspired dashboard initialized")
     
     def _create_header(self):
+        """Create minimalist Apple-style header"""
         
         header_html = """
         <div style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
+            padding: 40px 50px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
             margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         ">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="
-                    background: rgba(255,255,255,0.2);
-                    padding: 15px;
-                    border-radius: 12px;
-                    backdrop-filter: blur(10px);
-                ">
-                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" 
-                              fill="white" opacity="0.9"/>
-                    </svg>
-                </div>
-                <div>
-                    <h1 style="
-                        color: white;
-                        margin: 0;
-                        font-size: 36px;
-                        font-weight: 700;
-                        letter-spacing: -0.5px;
-                    ">DataWhisperer</h1>
-                    <p style="
-                        color: rgba(255,255,255,0.9);
-                        margin: 5px 0 0 0;
-                        font-size: 16px;
-                        font-weight: 400;
-                    ">🤖 AI-Powered Dashboard Generation</p>
+            <!-- Animated gradient background -->
+            <div style="
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, transparent 70%);
+                animation: pulse 8s ease-in-out infinite;
+            "></div>
+            
+            <div style="position: relative; z-index: 1;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="
+                        width: 60px;
+                        height: 60px;
+                        background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+                        border-radius: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 10px 30px rgba(0, 122, 255, 0.3);
+                    ">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 style="
+                            color: #f5f5f7;
+                            margin: 0;
+                            font-size: 42px;
+                            font-weight: 700;
+                            letter-spacing: -1px;
+                        ">DataWhisperer</h1>
+                        <p style="
+                            color: rgba(245, 245, 247, 0.7);
+                            margin: 5px 0 0 0;
+                            font-size: 17px;
+                            font-weight: 400;
+                            letter-spacing: -0.2px;
+                        ">Ask. Analyze. Visualize. Instantly.</p>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <style>
+            @keyframes pulse {
+                0%, 100% { transform: translate(0, 0) scale(1); }
+                50% { transform: translate(10%, 10%) scale(1.1); }
+            }
+        </style>
         """
         
         return pn.pane.HTML(header_html, sizing_mode='stretch_width')
     
     def _create_stats_row(self):
-        """Create stats display for loaded data"""
+        """Create minimal stats cards"""
         
         self.stats_row = pn.Row(
             visible=False,
             sizing_mode='stretch_width',
-            margin=(0, 0, 20, 0)
+            margin=(0, 0, 25, 0)
         )
         
         return self.stats_row
     
     def _update_stats(self):
-        """Update statistics display"""
+        """Update statistics with glassmorphism cards"""
         
         if not self.query_processor.table_name:
             self.stats_row.visible = False
             return
         
         stats_html = f"""
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <div style="
-                flex: 1;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 20px;
-                border-radius: 10px;
-                color: white;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <!-- Dataset Card -->
+            <div class="glass smooth-transition hover-lift" style="
+                padding: 24px;
+                border-radius: 16px;
+                text-align: center;
             ">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📊 Dataset</div>
-                <div style="font-size: 24px; font-weight: 700;">{self.query_processor.table_name}</div>
+                <div style="
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.6);
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 10px;
+                ">Dataset</div>
+                <div style="
+                    font-size: 26px;
+                    font-weight: 700;
+                    color: #007AFF;
+                    letter-spacing: -0.5px;
+                ">{self.query_processor.table_name}</div>
             </div>
-            <div style="
-                flex: 1;
-                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                padding: 20px;
-                border-radius: 10px;
-                color: white;
-                box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            
+            <!-- Rows Card -->
+            <div class="glass smooth-transition hover-lift" style="
+                padding: 24px;
+                border-radius: 16px;
+                text-align: center;
             ">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📝 Rows</div>
-                <div style="font-size: 24px; font-weight: 700;">{self.query_processor.row_count:,}</div>
+                <div style="
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.6);
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 10px;
+                ">Rows</div>
+                <div style="
+                    font-size: 26px;
+                    font-weight: 700;
+                    color: #30D158;
+                    letter-spacing: -0.5px;
+                ">{self.query_processor.row_count:,}</div>
             </div>
-            <div style="
-                flex: 1;
-                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                padding: 20px;
-                border-radius: 10px;
-                color: white;
-                box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            
+            <!-- Columns Card -->
+            <div class="glass smooth-transition hover-lift" style="
+                padding: 24px;
+                border-radius: 16px;
+                text-align: center;
             ">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🔢 Columns</div>
-                <div style="font-size: 24px; font-weight: 700;">{len(self.query_processor.schema_details)}</div>
+                <div style="
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.6);
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 10px;
+                ">Columns</div>
+                <div style="
+                    font-size: 26px;
+                    font-weight: 700;
+                    color: #FF9F0A;
+                    letter-spacing: -0.5px;
+                ">{len(self.query_processor.schema_details)}</div>
             </div>
-            <div style="
-                flex: 1;
-                background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-                padding: 20px;
-                border-radius: 10px;
-                color: white;
-                box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+            
+            <!-- Queries Card -->
+            <div class="glass smooth-transition hover-lift" style="
+                padding: 24px;
+                border-radius: 16px;
+                text-align: center;
             ">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">✅ Status</div>
-                <div style="font-size: 24px; font-weight: 700;">Ready</div>
+                <div style="
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.6);
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 10px;
+                ">Insights</div>
+                <div style="
+                    font-size: 26px;
+                    font-weight: 700;
+                    color: #BF5AF2;
+                    letter-spacing: -0.5px;
+                ">{len(self.query_history)}</div>
             </div>
         </div>
         """
@@ -153,39 +288,83 @@ class DataWhispererDashboard(param.Parameterized):
         self.stats_row.visible = True
     
     def _create_upload_section(self):
-        """Create modern file upload section"""
+        """Create minimal upload interface"""
         
         self.file_input = pn.widgets.FileInput(
             accept=','.join(self.config.supported_file_types),
             sizing_mode='stretch_width',
-            height=50
+            height=50,
+            styles={
+                'background': 'rgba(30, 30, 30, 0.7)',
+                'border': '1px solid rgba(255, 255, 255, 0.1)',
+                'border-radius': '12px'
+            }
         )
         self.file_input.param.watch(self._on_file_upload, 'value')
         
         upload_html = """
-        <div style="
-            background: white;
-            border: 3px dashed #cbd5e0;
-            border-radius: 12px;
-            padding: 40px;
+        <div class="glass smooth-transition" style="
+            border-radius: 20px;
+            padding: 50px;
             text-align: center;
-            transition: all 0.3s ease;
-        " onmouseover="this.style.borderColor='#667eea'; this.style.background='#f7fafc';" 
-           onmouseout="this.style.borderColor='#cbd5e0'; this.style.background='white';">
-            <div style="font-size: 48px; margin-bottom: 15px;">📁</div>
-            <h3 style="color: #2d3748; margin: 10px 0;">Drop Your Data File Here</h3>
-            <p style="color: #718096; margin: 10px 0 20px 0;">
-                or click below to browse
+            cursor: pointer;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        " onmouseover="this.style.borderColor='rgba(0, 122, 255, 0.5)'; this.style.background='rgba(0, 122, 255, 0.05)';" 
+           onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.background='rgba(30, 30, 30, 0.7)';">
+            <div style="
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 20px;
+                background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                    <path d="M9 16v-6h-4l5-5 5 5h-4v6h-2zm-4 2h14v2h-14z"/>
+                </svg>
+            </div>
+            <h3 style="color: #f5f5f7; margin: 0 0 10px 0; font-weight: 600; font-size: 20px;">
+                Drop your data here
+            </h3>
+            <p style="color: rgba(245, 245, 247, 0.6); margin: 0 0 20px 0; font-size: 15px;">
+                or click to browse
             </p>
             <div style="
-                display: inline-block;
-                background: #edf2f7;
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 13px;
-                color: #4a5568;
+                display: inline-flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: center;
             ">
-                Supported: CSV, Excel (max 100MB)
+                <span style="
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.7);
+                ">CSV</span>
+                <span style="
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.7);
+                ">Excel</span>
+                <span style="
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.7);
+                ">JSON</span>
+                <span style="
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: rgba(245, 245, 247, 0.7);
+                ">Parquet</span>
             </div>
         </div>
         """
@@ -194,83 +373,66 @@ class DataWhispererDashboard(param.Parameterized):
             pn.pane.HTML(upload_html, sizing_mode='stretch_width'),
             self.file_input,
             sizing_mode='stretch_width',
-            margin=(0, 0, 20, 0)
-        )
-    
-    def _create_schema_section(self):
-        """Create collapsible schema display"""
-        
-        self.schema_display = pn.pane.Markdown(
-            "*Upload a file to see the schema*",
-            styles={'color': '#718096', 'font-style': 'italic'},
-            sizing_mode='stretch_width'
-        )
-        
-        return pn.Card(
-            self.schema_display,
-            title="📋 Data Schema",
-            collapsed=True,
-            collapsible=True,
-            header_background='#f7fafc',
-            styles={
-                'background': 'white',
-                'border': '1px solid #e2e8f0',
-                'border-radius': '10px',
-                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
-            },
-            margin=(0, 0, 20, 0),
-            sizing_mode='stretch_width'
+            margin=(0, 0, 25, 0)
         )
     
     def _create_query_section(self):
-        """Create modern query input section"""
+        """Create minimal query interface"""
         
         self.query_input = pn.widgets.TextAreaInput(
-            placeholder='Ask anything about your data...\n\nExamples:\n• What are the top 5 products by revenue?\n• Show me monthly sales trends\n• Count customers by region',
-            height=120,
+            placeholder='Ask anything about your data...',
+            height=80,
             disabled=True,
             sizing_mode='stretch_width',
             styles={
                 'font-size': '16px',
-                'border': '2px solid #e2e8f0',
-                'border-radius': '8px',
-                'padding': '12px'
+                'background': 'rgba(30, 30, 30, 0.7)',
+                'border': '1px solid rgba(255, 255, 255, 0.1)',
+                'border-radius': '16px',
+                'padding': '16px',
+                'color': '#f5f5f7',
+                'backdrop-filter': 'blur(20px)'
             }
         )
         
         self.submit_button = pn.widgets.Button(
             name='✨ Analyze',
             button_type='primary',
-            width=150,
-            height=45,
+            width=140,
+            height=48,
             disabled=True,
             styles={
-                'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'background': 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
                 'border': 'none',
                 'font-size': '16px',
                 'font-weight': '600',
-                'border-radius': '8px',
-                'box-shadow': '0 4px 15px rgba(102, 126, 234, 0.4)'
+                'border-radius': '12px',
+                'box-shadow': '0 4px 20px rgba(0, 122, 255, 0.4)',
+                'color': 'white'
             }
         )
         self.submit_button.on_click(self._on_submit_query)
         
         self.clear_button = pn.widgets.Button(
-            name='🗑️ Clear',
+            name='Clear All',
             button_type='light',
             width=120,
-            height=45,
+            height=48,
             disabled=True,
             styles={
-                'border-radius': '8px',
-                'font-size': '14px'
+                'background': 'rgba(255, 255, 255, 0.1)',
+                'border': '1px solid rgba(255, 255, 255, 0.2)',
+                'border-radius': '12px',
+                'font-size': '15px',
+                'font-weight': '500',
+                'color': '#f5f5f7'
             }
         )
         self.clear_button.on_click(self._on_clear_results)
         
         self.status_indicator = pn.indicators.LoadingSpinner(
             value=False,
-            size=30,
+            size=32,
             color='primary',
             visible=False
         )
@@ -282,109 +444,87 @@ class DataWhispererDashboard(param.Parameterized):
             self.status_indicator,
             pn.layout.HSpacer(),
             align='center',
-            margin=(15, 0)
+            margin=(15, 0, 0, 0)
         )
         
-        # Smart examples
-        examples_html = """
-        <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-top: 15px;">
-            <h4 style="color: #2d3748; margin: 0 0 15px 0; font-size: 16px;">💡 Smart Query Examples</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #667eea;">
-                    <strong style="color: #667eea;">Aggregations</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
-                        <li>Total sales by category</li>
-                        <li>Average order value</li>
-                        <li>Count of active users</li>
-                    </ul>
-                </div>
-                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #f093fb;">
-                    <strong style="color: #f093fb;">Trends</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
-                        <li>Monthly revenue trend</li>
-                        <li>Sales over time</li>
-                        <li>Daily user growth</li>
-                    </ul>
-                </div>
-                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #4facfe;">
-                    <strong style="color: #4facfe;">Rankings</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
-                        <li>Top 10 customers</li>
-                        <li>Best performing products</li>
-                        <li>Lowest conversion rates</li>
-                    </ul>
-                </div>
-                <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #43e97b;">
-                    <strong style="color: #43e97b;">Distributions</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #4a5568; font-size: 14px;">
-                        <li>Customer breakdown by region</li>
-                        <li>Product category distribution</li>
-                        <li>Status percentages</li>
-                    </ul>
-                </div>
-            </div>
+        query_card = f"""
+        <div class="glass" style="
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+        ">
+            <h3 style="
+                color: #f5f5f7;
+                margin: 0 0 20px 0;
+                font-size: 20px;
+                font-weight: 600;
+                letter-spacing: -0.3px;
+            ">Ask Your Question</h3>
         </div>
         """
         
         return pn.Column(
-            pn.pane.HTML('<h3 style="color: #2d3748; margin: 0 0 15px 0;">💬 Ask Your Question</h3>'),
+            pn.pane.HTML(query_card.replace('</div>', ''), sizing_mode='stretch_width'),
             self.query_input,
             button_row,
-            pn.pane.HTML(examples_html, sizing_mode='stretch_width'),
-            styles={
-                'background': 'white',
-                'padding': '25px',
-                'border-radius': '12px',
-                'border': '1px solid #e2e8f0',
-                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
-            },
-            sizing_mode='stretch_width',
-            margin=(0, 0, 20, 0)
+            pn.pane.HTML('</div>'),
+            sizing_mode='stretch_width'
         )
     
     def _create_results_section(self):
-        """Create modern results display"""
+        """Create auto-layout results grid"""
         
         empty_state_html = """
         <div style="
             text-align: center;
-            padding: 60px 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 12px;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            padding: 80px 20px;
+            background: rgba(30, 30, 30, 0.4);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         ">
-            <div style="font-size: 64px; margin-bottom: 20px;">📊</div>
-            <h3 style="color: #2d3748; margin: 0 0 10px 0;">Ready to Analyze</h3>
-            <p style="color: #718096; max-width: 500px; margin: 0;">
-                Upload your data and ask questions to generate intelligent visualizations and insights
+            <div style="
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 25px;
+                background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(88, 86, 214, 0.2) 100%);
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="rgba(245, 245, 247, 0.4)">
+                    <path d="M3 3h7v7h-7v-7zm11 0h7v7h-7v-7zm-11 11h7v7h-7v-7zm11 0h7v7h-7v-7z"/>
+                </svg>
+            </div>
+            <h3 style="color: rgba(245, 245, 247, 0.8); margin: 0 0 10px 0; font-weight: 600; font-size: 22px;">
+                Ready for Insights
+            </h3>
+            <p style="color: rgba(245, 245, 247, 0.5); margin: 0; font-size: 16px; max-width: 500px; margin: 0 auto;">
+                Upload your data and start asking questions.<br/>Each insight will appear here automatically.
             </p>
         </div>
         """
         
-        self.results_column = pn.Column(
-            pn.pane.HTML(empty_state_html, sizing_mode='stretch_width'),
-            sizing_mode='stretch_width'
-        )
+        # Use GridSpec for responsive auto-layout
+        self.results_grid = pn.GridSpec(sizing_mode='stretch_width', height=800)
+        self.results_grid[0, :] = pn.pane.HTML(empty_state_html, sizing_mode='stretch_width')
         
         return pn.Column(
-            pn.pane.HTML('<h3 style="color: #2d3748; margin: 0 0 15px 0;">📈 Analysis Results</h3>'),
-            self.results_column,
-            styles={
-                'background': 'white',
-                'padding': '25px',
-                'border-radius': '12px',
-                'border': '1px solid #e2e8f0',
-                'box-shadow': '0 1px 3px rgba(0,0,0,0.1)'
-            },
+            pn.pane.HTML("""
+                <h3 style="
+                    color: #f5f5f7;
+                    margin: 0 0 20px 0;
+                    font-size: 24px;
+                    font-weight: 600;
+                    letter-spacing: -0.5px;
+                ">Your Insights</h3>
+            """),
+            self.results_grid,
             sizing_mode='stretch_width'
         )
     
     def _on_file_upload(self, event):
-        """Handle file upload with modern feedback"""
+        """Handle file upload"""
         
         if event.new is None:
             return
@@ -418,7 +558,7 @@ class DataWhispererDashboard(param.Parameterized):
                 return
             
             pn.state.notifications.info(
-                f"📂 Processing {file_name} ({file_size_mb:.1f}MB)...",
+                f"📂 Processing {file_name}...",
                 duration=3000
             )
             
@@ -469,30 +609,14 @@ class DataWhispererDashboard(param.Parameterized):
         """Update UI after successful upload"""
         
         self.data_loaded = True
-        self.schema_display.object = self._format_schema()
         self.query_input.disabled = False
         self.submit_button.disabled = False
         self._update_stats()
         
         logger.info("✅ UI updated for dataset: %s", file_name)
     
-    def _format_schema(self) -> str:
-        """Format schema for display"""
-        
-        if not self.query_processor.schema_details:
-            return "*No schema available*"
-        
-        md = f"### 📊 Table: `{self.query_processor.table_name}`\n\n"
-        md += f"**Total Rows:** {self.query_processor.row_count:,}\n\n"
-        md += "#### Columns:\n\n"
-        
-        for i, detail in enumerate(self.query_processor.schema_details, 1):
-            md += f"{i}. {detail}\n"
-        
-        return md
-    
     def _on_submit_query(self, event):
-        """Handle query submission"""
+        """Handle query submission with auto-layout"""
         
         if self.processing or not self.query_input.value:
             return
@@ -505,7 +629,7 @@ class DataWhispererDashboard(param.Parameterized):
         query = self.query_input.value.strip()
         
         logger.info("🔍 Processing query: %s", query)
-        pn.state.notifications.info(f"🤖 Analyzing: {query[:50]}...", duration=3000)
+        pn.state.notifications.info(f"🤖 Analyzing...", duration=2000)
         
         def run_query():
             try:
@@ -531,12 +655,12 @@ class DataWhispererDashboard(param.Parameterized):
                         pagination='local',
                         page_size=20,
                         sizing_mode='stretch_width',
-                        theme='modern'
+                        theme='midnight'
                     )
                 
                 def apply_success():
-                    result_card = self._create_result_card(query, sql_query, viz, viz_config)
-                    self.results_column.insert(0, result_card)
+                    # Add to grid with auto-layout
+                    self._add_to_grid(query, sql_query, viz, viz_config)
                     
                     self.query_history.append({
                         'query': query,
@@ -547,11 +671,9 @@ class DataWhispererDashboard(param.Parameterized):
                     
                     self.clear_button.disabled = False
                     self.query_input.value = ""
+                    self._update_stats()
                     
-                    pn.state.notifications.success(
-                        f"✅ Analysis complete!",
-                        duration=4000
-                    )
+                    pn.state.notifications.success("✅ Insight added!", duration=3000)
                 
                 pn.state.execute(apply_success)
                 
@@ -560,28 +682,6 @@ class DataWhispererDashboard(param.Parameterized):
                 logger.error("Query error: %s", error_text, exc_info=True)
                 
                 def apply_error():
-                    error_html = f"""
-                    <div style="
-                        background: linear-gradient(135deg, #fee 0%, #fdd 100%);
-                        border: 2px solid #f5c6cb;
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin-bottom: 20px;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                            <div style="font-size: 36px;">⚠️</div>
-                            <div>
-                                <h4 style="color: #721c24; margin: 0;">Analysis Failed</h4>
-                                <p style="color: #721c24; margin: 5px 0 0 0; opacity: 0.8;">{error_text}</p>
-                            </div>
-                        </div>
-                        <div style="background: white; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #555;">
-                            <strong>Query:</strong> {query}
-                        </div>
-                    </div>
-                    """
-                    self.results_column.insert(0, pn.pane.HTML(error_html, sizing_mode='stretch_width'))
-                    self.clear_button.disabled = False
                     pn.state.notifications.error(f"❌ {error_text[:100]}", duration=6000)
                 
                 pn.state.execute(apply_error)
@@ -598,123 +698,150 @@ class DataWhispererDashboard(param.Parameterized):
         thread = threading.Thread(target=run_query, daemon=True)
         thread.start()
     
-    def _create_result_card(self, query, sql, viz, viz_config):
-        """Create modern result card"""
+    def _add_to_grid(self, query, sql, viz, viz_config):
+        """Add result card to auto-layout grid"""
         
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        card = self._create_result_card(query, sql, viz, viz_config)
+        self.result_cards.append(card)
+        
+        # Auto-layout logic: arrange in responsive grid
+        n_cards = len(self.result_cards)
+        
+        # Clear grid
+        self.results_grid.clear()
+        
+        if n_cards == 1:
+            # Single card: full width
+            self.results_grid[0, :] = self.result_cards[0]
+        elif n_cards == 2:
+            # Two cards: side by side
+            self.results_grid[0, :6] = self.result_cards[0]
+            self.results_grid[0, 6:] = self.result_cards[1]
+        elif n_cards == 3:
+            # Three cards: 2 top, 1 bottom
+            self.results_grid[0, :6] = self.result_cards[0]
+            self.results_grid[0, 6:] = self.result_cards[1]
+            self.results_grid[1, :] = self.result_cards[2]
+        elif n_cards == 4:
+            # Four cards: 2x2 grid
+            self.results_grid[0, :6] = self.result_cards[0]
+            self.results_grid[0, 6:] = self.result_cards[1]
+            self.results_grid[1, :6] = self.result_cards[2]
+            self.results_grid[1, 6:] = self.result_cards[3]
+        else:
+            # 5+ cards: keep adding in grid pattern
+            row = 0
+            col = 0
+            for i, card in enumerate(self.result_cards):
+                if i % 2 == 0:
+                    self.results_grid[row, :6] = card
+                else:
+                    self.results_grid[row, 6:] = card
+                    row += 1
+    
+    def _create_result_card(self, query, sql, viz, viz_config):
+        """Create minimal Apple-style result card"""
+        
+        timestamp = datetime.now().strftime("%H:%M")
         viz_type = viz_config.get('visualization_type', 'chart')
         title = viz_config.get('title', 'Results')
         description = viz_config.get('description', '')
         
-        # Insight badge
-        insight_html = f"""
-        <div style="
-            background: linear-gradient(135deg, #fff7cd 0%, #ffeaa7 100%);
-            border-left: 4px solid #fdcb6e;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        ">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="font-size: 24px;">💡</div>
-                <div>
-                    <strong style="color: #2d3748;">Insight:</strong>
-                    <span style="color: #4a5568;"> {description}</span>
+        # Create card with glassmorphism
+        card_content = pn.Column(
+            # Header
+            pn.pane.HTML(f"""
+                <div style="
+                    padding: 20px 20px 15px 20px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                ">
+                    <div style="font-size: 13px; color: rgba(245, 245, 247, 0.6); margin-bottom: 8px;">
+                        {timestamp} • {viz_type.replace('_', ' ').title()}
+                    </div>
+                    <div style="font-size: 16px; font-weight: 600; color: #f5f5f7; line-height: 1.4;">
+                        {query}
+                    </div>
                 </div>
-            </div>
-        </div>
-        """ if description else ""
-        
-        # SQL accordion
-        sql_section = pn.Accordion(
-            ("🔍 View Generated SQL", pn.pane.Markdown(
-                f"```sql\n{sql}\n```",
-                sizing_mode='stretch_width'
-            )),
-            active=[],
-            header_background='#f7fafc',
-            sizing_mode='stretch_width',
-            styles={'margin-top': '15px'}
-        )
-        
-        # Metadata
-        meta_html = f"""
-        <div style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            background: #f7fafc;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 13px;
-            color: #718096;
-        ">
-            <span>🕐 {timestamp}</span>
-            <span>📊 {viz_type.replace('_', ' ').title()}</span>
-            <span>📝 {len(query)} characters</span>
-        </div>
-        """
-        
-        result_card = pn.Column(
-            pn.pane.HTML(f'<h4 style="color: #2d3748; margin: 0 0 10px 0;">❓ {query}</h4>'),
-            pn.pane.HTML(insight_html) if description else pn.Spacer(height=0),
-            pn.pane.HTML(f'<div style="padding: 10px 0;"><strong style="color: #4a5568;">📈 {title}</strong></div>'),
+            """, sizing_mode='stretch_width'),
+            
+            # Insight badge (if exists)
+            pn.pane.HTML(f"""
+                <div style="
+                    padding: 15px 20px;
+                    background: rgba(0, 122, 255, 0.1);
+                    border-left: 3px solid #007AFF;
+                    margin: 15px 20px;
+                    border-radius: 8px;
+                ">
+                    <div style="font-size: 13px; color: rgba(245, 245, 247, 0.6); margin-bottom: 4px;">
+                        💡 Insight
+                    </div>
+                    <div style="font-size: 14px; color: #f5f5f7; line-height: 1.5;">
+                        {description}
+                    </div>
+                </div>
+            """, sizing_mode='stretch_width') if description else pn.Spacer(height=0),
+            
+            # Visualization
+            pn.pane.HTML('<div style="padding: 0 20px 20px 20px;">', sizing_mode='stretch_width'),
             viz,
-            sql_section,
-            pn.pane.HTML(meta_html, sizing_mode='stretch_width'),
+            pn.pane.HTML('</div>', sizing_mode='stretch_width'),
+            
+            sizing_mode='stretch_width',
             styles={
-                'background': 'white',
-                'padding': '25px',
-                'border-radius': '12px',
-                'border': '1px solid #e2e8f0',
-                'box-shadow': '0 4px 6px rgba(0,0,0,0.1)',
-                'margin-bottom': '20px'
-            },
-            sizing_mode='stretch_width'
+                'background': 'rgba(30, 30, 30, 0.7)',
+                'border': '1px solid rgba(255, 255, 255, 0.1)',
+                'border-radius': '20px',
+                'backdrop-filter': 'blur(20px)',
+                'overflow': 'hidden'
+            }
         )
         
-        return result_card
+        return card_content
     
     def _on_clear_results(self, event):
         """Clear all results"""
         
-        self.results_column.clear()
+        self.result_cards.clear()
+        self.results_grid.clear()
         
         empty_html = """
         <div style="
             text-align: center;
-            padding: 40px;
-            background: #f7fafc;
-            border-radius: 10px;
-            color: #718096;
+            padding: 60px 20px;
+            background: rgba(30, 30, 30, 0.4);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         ">
-            <div style="font-size: 48px; margin-bottom: 10px;">🧹</div>
-            <p>Results cleared. Ask another question!</p>
+            <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">✨</div>
+            <p style="color: rgba(245, 245, 247, 0.6); font-size: 16px;">
+                All insights cleared. Ask another question!
+            </p>
         </div>
         """
         
-        self.results_column.append(pn.pane.HTML(empty_html, sizing_mode='stretch_width'))
+        self.results_grid[0, :] = pn.pane.HTML(empty_html, sizing_mode='stretch_width')
         self.query_history.clear()
         self.clear_button.disabled = True
+        self._update_stats()
         
-        pn.state.notifications.info("🧹 Results cleared", duration=2000)
+        pn.state.notifications.info("🧹 Cleared all insights", duration=2000)
         logger.info("Results cleared")
     
     def create_app(self):
-        """Create the complete modern application"""
+        """Create the complete Apple-inspired dark theme application"""
         
         app = pn.Column(
+            pn.pane.HTML(APPLE_DARK_CSS),
             self._create_header(),
             self._create_stats_row(),
             self._create_upload_section(),
-            self._create_schema_section(),
             self._create_query_section(),
             self._create_results_section(),
             sizing_mode='stretch_width',
             styles={
-                'background': '#f0f4f8',
-                'padding': '30px',
+                'background': '#000000',
+                'padding': '40px',
                 'min-height': '100vh'
             }
         )

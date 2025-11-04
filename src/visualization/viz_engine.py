@@ -1,7 +1,3 @@
-"""
-Enhanced Visualization Engine with smarter auto-detection and modern charts
-"""
-
 import pandas as pd
 import panel as pn
 import plotly.express as px
@@ -19,6 +15,37 @@ class VisualizationEngine:
         self.config = config
         self.color_palette = config.get_color_palette()
     
+    def _apply_dark_theme(self, fig):
+        """Apply consistent dark theme to plotly figure"""
+        fig.update_layout(
+            plot_bgcolor='rgba(0, 0, 0, 0)',
+            paper_bgcolor='rgba(0, 0, 0, 0)',
+            font={'color': '#f5f5f7', 'family': 'Inter, -apple-system, sans-serif'},
+            title_font={'size': 20, 'color': '#f5f5f7', 'family': 'Inter'},
+            xaxis={
+                'gridcolor': 'rgba(255, 255, 255, 0.1)',
+                'linecolor': 'rgba(255, 255, 255, 0.2)',
+                'zerolinecolor': 'rgba(255, 255, 255, 0.2)',
+                'color': '#f5f5f7'
+            },
+            yaxis={
+                'gridcolor': 'rgba(255, 255, 255, 0.1)',
+                'linecolor': 'rgba(255, 255, 255, 0.2)',
+                'zerolinecolor': 'rgba(255, 255, 255, 0.2)',
+                'color': '#f5f5f7'
+            },
+            legend={
+                'bgcolor': 'rgba(30, 30, 30, 0.9)',
+                'bordercolor': 'rgba(255, 255, 255, 0.1)',
+                'font': {'color': '#f5f5f7'}
+            },
+            hoverlabel={
+                'bgcolor': 'rgba(30, 30, 30, 0.95)',
+                'font': {'color': '#f5f5f7', 'family': 'Inter'}
+            }
+        )
+        return fig
+    
     def create_visualization(self, data: pd.DataFrame, config: Dict[str, Any], query: str):
         """Create visualization with smart fallbacks"""
         
@@ -28,7 +55,7 @@ class VisualizationEngine:
         if viz_type == 'auto' or not viz_type:
             viz_type = self._smart_detect_viz_type(data, query, config)
             config['visualization_type'] = viz_type
-            logger.info(f"🎨 Auto-detected: {viz_type}")
+            logger.info(f"Auto-detected: {viz_type}")
         
         # Normalize viz type
         viz_type = self._normalize_viz_type(viz_type)
@@ -56,10 +83,10 @@ class VisualizationEngine:
         
         try:
             viz = creator(data, config)
-            logger.info(f"✅ Created {viz_type} visualization")
+            logger.info(f"Created {viz_type} visualization")
             return viz
         except Exception as e:
-            logger.error(f"❌ Error creating {viz_type}: {e}", exc_info=True)
+            logger.error(f"Error creating {viz_type}: {e}", exc_info=True)
             # Fallback to table
             return self._create_table(data, config)
     
@@ -91,7 +118,7 @@ class VisualizationEngine:
         return type_map.get(normalized, normalized)
     
     def _smart_detect_viz_type(self, data: pd.DataFrame, query: str, config: Dict) -> str:
-        """Intelligently detect the best visualization type"""
+        """Intelligently detect the best visualization type with comprehensive analysis"""
         
         n_rows = len(data)
         n_cols = len(data.columns)
@@ -102,23 +129,34 @@ class VisualizationEngine:
         datetime_cols = self._detect_datetime_columns(data)
         categorical_cols = [col for col in data.columns if col not in numeric_cols + datetime_cols]
         
-        logger.info(f"📊 Data profile: {n_rows} rows, {n_cols} cols | Numeric: {len(numeric_cols)}, DateTime: {len(datetime_cols)}, Categorical: {len(categorical_cols)}")
+        logger.info(f"Data profile: {n_rows} rows, {n_cols} cols | Numeric: {len(numeric_cols)}, DateTime: {len(datetime_cols)}, Categorical: {len(categorical_cols)}")
         
         # Rule 0: Explicit chart type mentions (highest priority)
         explicit_types = {
+            'scatter plot': 'scatter',
+            'scatter': 'scatter',
+            'scatterplot': 'scatter',
+            'correlation plot': 'scatter',
+            'heatmap': 'heatmap',
+            'heat map': 'heatmap',
+            'matrix': 'heatmap',
+            'pivot': 'heatmap',
             'pie chart': 'pie',
             'pie': 'pie',
             'donut chart': 'donut',
             'donut': 'donut',
+            'doughnut': 'donut',
             'bar chart': 'bar',
-            'bar': 'bar',
+            'bar graph': 'bar',
+            'column chart': 'bar',
             'line chart': 'line',
-            'line': 'line',
-            'scatter plot': 'scatter',
-            'scatter': 'scatter',
+            'line graph': 'line',
+            'area chart': 'area',
             'table': 'table',
-            'heatmap': 'heatmap',
-            'treemap': 'treemap'
+            'treemap': 'treemap',
+            'kpi': 'number',
+            'metric': 'number',
+            'card': 'number'
         }
         
         for keyword, viz_type in explicit_types.items():
@@ -126,10 +164,49 @@ class VisualizationEngine:
                 logger.info(f"→ Explicit mention '{keyword}' → {viz_type}")
                 return viz_type
         
-        # Rule 1: Single value displays
-        if n_rows == 1 and n_cols <= 3:
-            logger.info("→ Single value detected → number")
-            return 'number'
+        # Rule 1: Single value KPI displays
+        if n_rows == 1 and n_cols <= 6:
+            if len(numeric_cols) >= 1:
+                logger.info("→ Single row with metrics → number (KPI cards)")
+                return 'number'
+        
+        # Rule 2: Correlation / Scatter (2+ numeric columns, many rows)
+        correlation_keywords = ['correlation', 'correlate', 'relationship', 'vs', 'versus', 'against', 
+                                'impact', 'influence', 'affect', 'depend', 'related']
+        has_correlation_hint = any(kw in query_lower for kw in correlation_keywords)
+        
+        if (has_correlation_hint or len(numeric_cols) >= 2) and n_rows >= 10:
+            # Check if we have exactly 2 numeric columns (perfect for scatter)
+            if len(numeric_cols) == 2:
+                logger.info("→ Two numeric columns + correlation intent → scatter")
+                return 'scatter'
+            # Or if explicitly about correlation
+            elif has_correlation_hint and len(numeric_cols) >= 2:
+                logger.info("→ Multiple numerics + correlation keyword → scatter")
+                return 'scatter'
+        
+        # Rule 3: Heatmap (pivot-style data or matrix)
+        heatmap_keywords = ['heatmap', 'matrix', 'pivot', 'cross-tab', 'crosstab']
+        has_heatmap_hint = any(kw in query_lower for kw in heatmap_keywords)
+        
+        if has_heatmap_hint or (len(categorical_cols) >= 2 and len(numeric_cols) >= 1):
+            # Check if data looks like a pivot (multiple combos of two categories)
+            if len(categorical_cols) >= 2 and n_rows >= 6:
+                logger.info("→ Two categoricals + numeric (pivot structure) → heatmap")
+                return 'heatmap'
+        
+        # Rule 4: Time series / Trends
+        time_keywords = ['trend', 'over time', 'timeline', 'history', 'evolution', 'time series',
+                        'monthly', 'weekly', 'daily', 'yearly', 'quarterly', 'per day', 'per month',
+                        'per year', 'growth', 'change over']
+        has_time_hint = any(kw in query_lower for kw in time_keywords)
+        
+        if (has_time_hint or datetime_cols) and numeric_cols:
+            if 'cumulative' in query_lower or 'stacked' in query_lower or 'filled' in query_lower:
+                logger.info("→ Time series + cumulative → area")
+                return 'area'
+            logger.info("→ Time series detected → line")
+            return 'line'
         
         # Rule 2: Table for detailed data or many columns
         table_keywords = ['table', 'list', 'show all', 'details', 'records']
@@ -391,18 +468,16 @@ class VisualizationEngine:
         )
         
         fig.update_layout(
-            height=max(500, min(800, len(data) * 15)),  # Dynamic height
-            template='plotly_white',
-            hovermode='x unified',
-            title_font_size=20,
-            title_font_color='#2d3748',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
+            height=max(500, min(800, len(data) * 15)),
             xaxis_title=x_col.replace('_', ' ').title(),
             yaxis_title=y_col.replace('_', ' ').title(),
             legend_title=color_col.replace('_', ' ').title() if color_col else None,
-            xaxis={'categoryorder': 'total descending'}  # Sort by total
+            xaxis={'categoryorder': 'total descending'},
+            hovermode='x unified'
         )
+        
+        # Apply dark theme
+        fig = self._apply_dark_theme(fig)
         
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
     
@@ -489,43 +564,79 @@ class VisualizationEngine:
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
     
     def _create_line_chart(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create modern line chart"""
+        """Create line chart with support for multiple series and trends"""
         
         x_col = config.get('x_axis', data.columns[0])
-        y_col = config.get('y_axis', data.columns[1] if len(data.columns) > 1 else data.columns[0])
+        y_col = config.get('y_axis')
+        color_col = config.get('color_by', None)
         title = config.get('title', 'Trend')
         
-        # Try to convert x to datetime
-        plot_data = data.copy()
-        try:
-            plot_data[x_col] = pd.to_datetime(plot_data[x_col], errors='coerce')
-            plot_data = plot_data.dropna(subset=[x_col]).sort_values(x_col)
-        except:
-            pass
+        # Find numeric and datetime columns
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        datetime_cols = self._detect_datetime_columns(data)
         
+        # Auto-detect x-axis (prefer datetime)
+        if datetime_cols and x_col not in datetime_cols:
+            x_col = datetime_cols[0]
+        
+        # Auto-detect y-axis (prefer numeric)
+        if not y_col or y_col not in data.columns:
+            remaining_numeric = [col for col in numeric_cols if col != x_col]
+            y_col = remaining_numeric[0] if remaining_numeric else numeric_cols[0] if numeric_cols else data.columns[-1]
+        
+        # Auto-detect color/grouping column for multi-line
+        if not color_col and len(data.columns) >= 3:
+            categorical_cols = [col for col in data.columns if col not in numeric_cols + datetime_cols]
+            if categorical_cols:
+                color_col = categorical_cols[0]
+                logger.info(f"📊 Multi-line chart detected: grouping by {color_col}")
+        
+        # Prepare data
+        plot_data = data.copy()
+        
+        # Try to convert x to datetime if it looks like dates
+        if x_col in plot_data.columns:
+            try:
+                converted = pd.to_datetime(plot_data[x_col], errors='coerce', infer_datetime_format=True)
+                if converted.notna().mean() >= 0.6:
+                    plot_data[x_col] = converted
+                    logger.info(f"✅ Converted {x_col} to datetime")
+            except Exception as e:
+                logger.warning(f"Could not convert {x_col} to datetime: {e}")
+        
+        # Sort by x column
+        plot_data = plot_data.dropna(subset=[x_col])
+        if pd.api.types.is_datetime64_any_dtype(plot_data[x_col]) or pd.api.types.is_numeric_dtype(plot_data[x_col]):
+            plot_data = plot_data.sort_values(by=x_col)
+        
+        logger.info(f"📈 Line chart: x={x_col}, y={y_col}, color={color_col}")
+        
+        # Create line chart
         fig = px.line(
             plot_data,
             x=x_col,
             y=y_col,
+            color=color_col,
             title=title,
             markers=True,
-            color_discrete_sequence=['#4facfe']
+            color_discrete_sequence=px.colors.qualitative.Bold
         )
         
         fig.update_traces(
-            line=dict(width=4),
-            marker=dict(size=10, line=dict(width=2, color='white'))
+            line=dict(width=3),
+            marker=dict(size=8, line=dict(width=2, color='white'))
         )
         
         fig.update_layout(
-            height=500,
-            template='plotly_white',
+            height=550,
             hovermode='x unified',
-            title_font_size=20,
-            title_font_color='#2d3748',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            xaxis_title=x_col.replace('_', ' ').title(),
+            yaxis_title=y_col.replace('_', ' ').title(),
+            legend_title=color_col.replace('_', ' ').title() if color_col else None
         )
+        
+        # Apply dark theme
+        fig = self._apply_dark_theme(fig)
         
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
     
@@ -699,21 +810,75 @@ class VisualizationEngine:
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')
     
     def _create_heatmap(self, data: pd.DataFrame, config: Dict) -> pn.pane.Plotly:
-        """Create heatmap"""
+        """Create heatmap - handles both matrix data and pivot-style data"""
         
         title = config.get('title', 'Heatmap')
         
-        fig = px.imshow(
-            data,
-            title=title,
-            color_continuous_scale='RdYlBu_r',
-            aspect='auto'
-        )
+        # Check if data needs to be pivoted (has categorical columns)
+        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+        categorical_cols = [col for col in data.columns if col not in numeric_cols]
+        
+        if len(categorical_cols) >= 2 and len(numeric_cols) >= 1:
+            # Pivot data: cat1 × cat2 → values
+            cat1 = categorical_cols[0]
+            cat2 = categorical_cols[1]
+            value_col = numeric_cols[0]
+            
+            logger.info(f"📊 Pivoting for heatmap: {cat1} × {cat2} → {value_col}")
+            
+            try:
+                # Create pivot table
+                pivot_data = data.pivot_table(
+                    values=value_col,
+                    index=cat1,
+                    columns=cat2,
+                    aggfunc='sum',
+                    fill_value=0
+                )
+                
+                fig = px.imshow(
+                    pivot_data,
+                    title=title,
+                    color_continuous_scale='RdYlBu_r',
+                    aspect='auto',
+                    labels=dict(x=cat2.replace('_', ' ').title(),
+                               y=cat1.replace('_', ' ').title(),
+                               color=value_col.replace('_', ' ').title())
+                )
+                
+                fig.update_xaxes(side='bottom')
+                
+            except Exception as e:
+                logger.warning(f"Pivot failed: {e}, using direct matrix")
+                # Fall back to direct matrix
+                matrix_data = data.select_dtypes(include=['number'])
+                fig = px.imshow(
+                    matrix_data,
+                    title=title,
+                    color_continuous_scale='RdYlBu_r',
+                    aspect='auto'
+                )
+        else:
+            # Already in matrix format or all numeric
+            matrix_data = data.select_dtypes(include=['number'])
+            
+            if matrix_data.empty:
+                logger.warning("No numeric data for heatmap, using all data")
+                matrix_data = data
+            
+            fig = px.imshow(
+                matrix_data,
+                title=title,
+                color_continuous_scale='Viridis',
+                aspect='auto',
+                text_auto=True  # Show values in cells
+            )
         
         fig.update_layout(
-            height=500,
+            height=max(400, min(800, len(data) * 30)),
             title_font_size=20,
-            title_font_color='#2d3748'
+            title_font_color='#2d3748',
+            template='plotly_white'
         )
         
         return pn.pane.Plotly(fig, sizing_mode='stretch_width')

@@ -156,23 +156,69 @@ CRITICAL RULES:
 7. Order results logically (e.g., by value DESC for rankings)
 8. Limit large result sets appropriately (TOP 10, TOP 20, etc.)
 
-QUERY PATTERNS:
+ADVANCED QUERY PATTERNS:
+
+AGGREGATIONS:
 - "Count X by Y" → SELECT Y, COUNT(*) as count FROM table GROUP BY Y ORDER BY count DESC
-- "Total/Sum of X" → SELECT SUM(X) as total FROM table
-- "Average X" → SELECT AVG(X) as average FROM table
-- "Top N by X" → SELECT * FROM table ORDER BY X DESC LIMIT N
-- "Distribution of X" → SELECT X, COUNT(*) as count FROM table GROUP BY X
+- "Total/Sum of X" → SELECT SUM(X) as total_X FROM table
+- "Average X" → SELECT AVG(X) as average_X FROM table
+- "Min/Max X" → SELECT MIN(X) as min_X, MAX(X) as max_X FROM table
+
+SINGLE VALUE KPIs:
+- "What is total X?" → SELECT SUM(X) as total FROM table
+- "Average X?" → SELECT AVG(X) as average FROM table
+- "How many X?" → SELECT COUNT(*) as count FROM table
+- Multiple KPIs → SELECT SUM(X) as total, AVG(Y) as average, COUNT(*) as count FROM table
+
+RANKINGS:
+- "Top N by X" → SELECT *, RANK() OVER (ORDER BY X DESC) as rank FROM table LIMIT N
+- "Bottom N" → ORDER BY X ASC LIMIT N
+
+TIME SERIES / TRENDS:
 - "Trend over time" → SELECT date_column, SUM(value) as total FROM table GROUP BY date_column ORDER BY date_column
+- "Monthly trend" → SELECT MONTH(date_col) as month, SUM(value) FROM table GROUP BY MONTH(date_col)
+- "Compare years" → SELECT YEAR(date_col) as year, SUM(value) FROM table GROUP BY YEAR(date_col)
+
+CORRELATIONS (for scatter plots):
+- "Relationship between X and Y" → SELECT X, Y FROM table WHERE X IS NOT NULL AND Y IS NOT NULL
+- "Correlation" → SELECT col1, col2, col3 FROM table (return multiple numeric columns)
+- "X vs Y" → SELECT X as x_value, Y as y_value FROM table
+- CRITICAL: For scatter plots, BOTH X and Y must be NUMERIC columns (price, quantity, age, amount, etc.)
+- If question mentions correlation/relationship, identify the TWO NUMERIC variables involved
+
+PRICE vs QUANTITY patterns:
+- "higher prices vs lower quantities" → SELECT price, quantity FROM table
+- "price vs sales" → SELECT price, sales_amount FROM table  
+- "do expensive items sell less" → SELECT price, quantity_sold FROM table
+- Look for price-related columns: unit_price, product_price, price, cost
+- Look for quantity columns: quantity, qty, transaction_qty, units_sold, volume
+
+DISTRIBUTIONS:
+- "Distribution of X" → SELECT X, COUNT(*) as count FROM table GROUP BY X
+- "Breakdown by X and Y" → SELECT X, Y, COUNT(*) as count FROM table GROUP BY X, Y
+
+PIVOT/CROSS-TAB (for heatmaps):
+- "X by Y matrix" → SELECT X, Y, COUNT(*) as value FROM table GROUP BY X, Y
+- Return data in long format for pivot visualization
 
 EXAMPLES:
 Question: "What is the total revenue?"
 SQL: SELECT SUM(revenue) as total_revenue FROM sales
 
-Question: "Count customers by status"
-SQL: SELECT status, COUNT(*) as customer_count FROM customers GROUP BY status ORDER BY customer_count DESC
+Question: "Show me revenue and profit KPIs"
+SQL: SELECT SUM(revenue) as total_revenue, SUM(profit) as total_profit, AVG(margin) as avg_margin FROM sales
 
-Question: "Top 5 products by sales"
-SQL: SELECT product_name, SUM(sales) as total_sales FROM sales GROUP BY product_name ORDER BY total_sales DESC LIMIT 5
+Question: "Correlation between price and quantity"
+SQL: SELECT price, quantity FROM products WHERE price IS NOT NULL AND quantity IS NOT NULL
+
+Question: "Do higher-priced drinks tend to have lower quantities sold?"
+SQL: SELECT unit_price, transaction_qty FROM sales WHERE product_category IN ('Coffee', 'Tea', 'Chocolate') AND unit_price IS NOT NULL AND transaction_qty IS NOT NULL
+
+Question: "Monthly sales trend for 2024"
+SQL: SELECT MONTH(order_date) as month, SUM(sales_amount) as monthly_sales FROM orders WHERE YEAR(order_date) = 2024 GROUP BY MONTH(order_date) ORDER BY month
+
+Question: "Sales by region and product category"
+SQL: SELECT region, product_category, SUM(sales) as total_sales FROM sales GROUP BY region, product_category ORDER BY region, total_sales DESC
 """
         
         sql_human = """Generate a SQL query for this question:
@@ -187,6 +233,20 @@ TABLE NAME: {table_name}
 SAMPLE DATA:
 {sample_data}
 
+IMPORTANT ANALYSIS INSTRUCTIONS:
+1. If the question asks about CORRELATION, RELATIONSHIP, or uses "vs":
+   - You MUST return TWO NUMERIC columns (e.g., price and quantity, age and income)
+   - DO NOT return categorical columns (product names, categories, etc.)
+   - Look for numeric columns in schema with names like: price, cost, amount, quantity, qty, age, revenue, units
+
+2. If the question mentions specific categories/filters (e.g., "Coffee, Tea, Chocolate"):
+   - Apply those as WHERE filters
+   - But still return the NUMERIC columns being compared
+
+3. For the schema above, identify numeric columns carefully:
+   - Columns with types: int, bigint, double, float, decimal are numeric
+   - Columns with sample values that are numbers are numeric
+
 Return ONLY the SQL query:"""
         
         sql_prompt = ChatPromptTemplate.from_messages([
@@ -200,64 +260,109 @@ Return ONLY the SQL query:"""
 
 CRITICAL: If the user EXPLICITLY asks for a specific chart type (e.g., "use a pie chart", "show as bar chart"), you MUST recommend that chart type.
 
-VISUALIZATION DECISION TREE:
+COMPREHENSIVE VISUALIZATION DECISION TREE:
 
-1. EXPLICIT REQUEST (HIGHEST PRIORITY):
+0. EXPLICIT REQUEST (HIGHEST PRIORITY):
    - User says "pie chart" → "pie"
    - User says "bar chart" → "bar"
    - User says "line chart" → "line"
-   - User says "table" → "table"
+   - User says "scatter plot" → "scatter"
+   - User says "heatmap" → "heatmap"
+   - User says "KPI" or "metric" → "number"
    - ALWAYS honor explicit requests!
 
-2. SINGLE VALUE (1 row, 1-3 columns with single value):
-   → "number" - Display as KPI card
+1. SINGLE VALUE KPIs (1-3 metrics in 1 row):
+   Examples: "total revenue", "average age", "count of customers"
+   Data: 1 row × 1-3 numeric columns
+   → "number" - Large KPI card with formatted numbers
 
-3. RATIO/PROPORTION DATA (1 row with multiple count/ratio columns):
-   Examples: "active_count, churned_count, inactive_count" in one row
-   → "pie" - Perfect for showing proportions
-   → "donut" - Alternative for proportions
+2. MULTIPLE KPIs (Several metrics):
+   Examples: "revenue, profit, and margin", "key metrics"
+   Data: 1 row × 3-6 numeric columns
+   → "number" - Multiple KPI cards side by side
 
-4. COUNT/AGGREGATE QUERIES:
-   - Single total/count/average → "number"
-   - Breakdown by category (< 8 items) → "pie" or "donut"
-   - Breakdown by category (8-20 items) → "bar"
-   - Breakdown by category (> 20 items) → "horizontal_bar" or "table"
+3. CORRELATION / RELATIONSHIP (2+ numeric columns, many rows):
+   Keywords: "correlation", "relationship", "vs", "versus", "against", "impact"
+   Examples: "price vs sales", "age vs income", "relationship between X and Y"
+   Data: 2+ numeric columns, 10+ rows
+   → "scatter" - Scatter plot with trendline
+   
+4. HEATMAP / MATRIX (Pivot data, 2 categorical + 1 numeric):
+   Keywords: "heatmap", "matrix", "cross-tab", "pivot"
+   Examples: "sales by region and month", "X by Y matrix"
+   Data: Categorical X × Categorical Y × Numeric value
+   → "heatmap" - Color-coded matrix
 
-5. TIME SERIES (date/time column + numeric):
-   → "line" - Show trends over time
-   → "area" - For cumulative or stacked trends
+5. TIME SERIES / TRENDS (datetime + numeric):
+   Keywords: "trend", "over time", "timeline", "history", "monthly", "weekly", "daily"
+   Examples: "monthly sales", "revenue over time", "growth trend"
+   Data: Date/time column + numeric values
+   → "line" - Line chart with markers
+   → "area" - If "cumulative", "stacked", "filled" mentioned
 
-6. COMPARISONS:
-   - Few categories (< 8) → "bar" or "horizontal_bar"
-   - Many categories (> 8) → "horizontal_bar" or "table"
-   - Rankings → "horizontal_bar" (best for reading labels)
+6. MULTI-LINE TRENDS (time + multiple series):
+   Examples: "compare sales trends by region", "revenue vs cost over time"
+   Data: Date + multiple numeric columns OR date + category + value
+   → "line" - Multi-line chart with legend
 
-7. DISTRIBUTIONS/COMPOSITION:
-   - Part-to-whole (< 10 items) → "pie"
-   - Part-to-whole with percentages → "donut"
-   - Distribution across categories (grouped data) → "bar"
-   - Many items → "bar"
+7. RANKINGS / TOP N (sorted categories, < 20 items):
+   Keywords: "top", "bottom", "best", "worst", "highest", "lowest", "rank"
+   Examples: "top 10 products", "best customers"
+   Data: Categories + numeric values, sorted
+   → "horizontal_bar" - Horizontal bars (best for labels)
+   → "bar" - Vertical bars if fewer items
 
-8. MULTI-DIMENSIONAL DATA:
-   - Data with 3 columns (category1, category2, value) → "bar" with grouping
-   - Example: store_location, product_category, count → grouped bar chart
-   - Keywords: "across", "by location", "by store", "distribution" → "bar"
+8. DISTRIBUTIONS / BREAKDOWN (categories + counts):
+   Keywords: "distribution", "breakdown", "composition", "split"
+   
+   Small (< 8 items):
+   → "pie" - Part-to-whole relationships
+   → "donut" - Alternative for percentages
+   
+   Medium (8-20 items):
+   → "bar" - Vertical bars
+   
+   Large (20+ items):
+   → "horizontal_bar" - Better for many labels
 
-8. CORRELATIONS:
-   - Two numeric variables → "scatter"
-   - Multiple variables → "heatmap"
+9. MULTI-DIMENSIONAL (3 columns: cat1, cat2, value):
+   Examples: "sales by region and product", "X across Y"
+   Data: 2 categorical columns + 1 numeric
+   → "bar" - Grouped bar chart
+   → "heatmap" - If many combinations
 
-9. HIERARCHIES:
-   - Nested categories + values → "treemap"
+10. RATIO/PROPORTION (single row, multiple counts):
+    Examples: "active vs inactive", "status breakdown"
+    Data: 1 row × multiple count columns (active_count, inactive_count)
+    → "pie" - Transform columns to slices
+    → "donut" - Alternative
 
-10. DETAILED DATA:
-    - Many columns or complex data → "table"
+11. DETAILED DATA / RAW:
+    Keywords: "show all", "list", "details", "raw data", "table"
+    Data: Many columns (> 6) or complex structure
+    → "table" - Interactive table with filters
+
+12. TREEMAP (hierarchical data):
+    Keywords: "hierarchy", "nested", "treemap"
+    Data: Categories + subcategories + values
+    → "treemap" - Hierarchical rectangles
+
+DECISION FACTORS:
+1. User's explicit request (highest priority)
+2. Query keywords and intent
+3. Data structure (rows × columns)
+4. Column types (numeric, categorical, datetime)
+5. Number of rows (few vs many)
+6. Relationships in data (correlation, hierarchy, time)
 
 CRITICAL RULES:
-- ALWAYS check if user explicitly requested a chart type first
-- For ratio/proportion queries (e.g., "ratio of X to Y"), use "pie" or "donut"
-- For single row with multiple count columns, use "pie" (columns become slices)
-- Consider query intent: "breakdown", "distribution", "split" → pie/donut preferred
+- Single values → "number" (KPI cards)
+- Two numerics + many rows → "scatter" (correlation)
+- DateTime + numeric → "line" (trends)
+- Few categories → "pie" (composition)
+- Many categories → "bar" (comparison)
+- 2 categoricals + numeric → "heatmap" or grouped "bar"
+- Detailed/complex → "table"
 
 Return ONLY valid JSON:
 {{
@@ -265,8 +370,9 @@ Return ONLY valid JSON:
   "title": "Clear, descriptive title",
   "x_axis": "column_name_for_x",
   "y_axis": "column_name_for_y",
+  "color_by": "column_for_grouping_or_color",
   "description": "One sentence insight about the data",
-  "reasoning": "Why this chart type was chosen"
+  "reasoning": "Why this chart type was chosen (1-2 sentences)"
 }}"""
         
         viz_human = """Recommend the best visualization:
