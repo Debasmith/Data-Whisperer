@@ -529,9 +529,9 @@ Return corrected SQL:"""
                 'success': True,
                 'query': query,
                 'sql': sql_query,
-                'data': result_pandas.to_dict('records'),
+                'data': result_pandas, # <-- FIX: Pass the DataFrame directly
                 'columns': list(result_pandas.columns),
-                'visualization': viz_config,
+                'viz_config': viz_config, # <-- FIX: Use the correct key 'viz_config'
                 'row_count': len(result_pandas),
                 'column_count': len(result_pandas.columns)
             }
