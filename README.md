@@ -6,7 +6,7 @@ This application uses a local Large Language Model (LLM) via Ollama, PySpark for
 
 ## ✨ Core Features
 
-  * **File Upload:** Load your data directly into the app. Supports `.csv`, `.xlsx`, `.xls`, `.json`, and `.parquet` files.
+  * **File Upload:** Load your data directly into the app. Supports `.csv`, `.xlsx` and `.xls` files.
   * **Natural Language Queries:** Ask questions in plain English, like "What are the top 10 products by sales?" or "Show me the monthly revenue trend."
   * **AI-Powered SQL Generation:** Uses an LLM (e.g., `gemma3`) and LangChain to automatically convert your question into an optimized Spark SQL query.
   * **Smart Visualization:** A second AI agent analyzes your query and the SQL results to recommend the best visualization (bar chart, pie chart, line chart, KPI, etc.).
