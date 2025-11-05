@@ -460,11 +460,10 @@ Return corrected SQL:"""
         return q.strip(' .,-')
     
     def _process_single_query(self, query: str) -> Dict[str, Any]:
-        """Process a single query and return the result."""
         try:
             logger.info("🔍 Processing query: %s", query)
             
-            # Step 1: Generate SQL with timeout
+            # Generate SQL with timeout
             success, result = self._execute_safely(
                 self._generate_sql,
                 query,
@@ -478,7 +477,7 @@ Return corrected SQL:"""
                     'error': result,
                     'query_type': 'sql_generation'
                 }
-                
+            
             sql_query = result
             logger.info("📝 Generated SQL: %s", sql_query[:150])
             
@@ -521,17 +520,22 @@ Return corrected SQL:"""
                 timeout_seconds=30
             )
             
-            if not success:
+            if not success or not isinstance(viz_config, dict):
                 viz_config = self._fallback_viz_config(result_pandas, query)
-                viz_config['error'] = "Visualization recommendation failed: " + str(viz_config)
+                viz_config['error'] = "Visualization recommendation failed"
+            
+            # Ensure viz_config is a dict
+            if not isinstance(viz_config, dict):
+                logger.warning("viz_config is not a dict, using fallback")
+                viz_config = self._fallback_viz_config(result_pandas, query)
             
             return {
                 'success': True,
                 'query': query,
                 'sql': sql_query,
-                'data': result_pandas, # <-- FIX: Pass the DataFrame directly
+                'data': result_pandas,
                 'columns': list(result_pandas.columns),
-                'viz_config': viz_config, # <-- FIX: Use the correct key 'viz_config'
+                'viz_config': viz_config,
                 'row_count': len(result_pandas),
                 'column_count': len(result_pandas.columns)
             }
@@ -545,9 +549,9 @@ Return corrected SQL:"""
                 'error': error_msg,
                 'query_type': 'unexpected_error'
             }
-    
-    def process_query(self, user_query: str) -> List[Dict[str, Any]]:
-        """Process one or more natural language queries end-to-end with enhanced intelligence.
+            
+    def process_queries(self, user_query: str) -> List[Dict[str, Any]]:
+        """Process one or more natural language queries.
         
         Args:
             user_query: Single query or multiple queries separated by newlines
@@ -721,66 +725,82 @@ Return corrected SQL:"""
         return config
     
     def _fallback_viz_config(self, data: pd.DataFrame, query: str) -> Dict[str, Any]:
-        """Intelligent fallback visualization configuration."""
+        """Intelligent fallback visualization configuration with error safety."""
         
-        n_rows = len(data)
-        n_cols = len(data.columns)
-        
-        # Single value
-        if n_rows == 1 and n_cols <= 3:
-            return {
-                'visualization_type': 'number',
-                'title': 'Result',
-                'description': 'Single value result'
-            }
-        
-        # Detect numeric columns
-        numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
-        
-        # Time series keywords
-        time_keywords = ['trend', 'over time', 'timeline', 'history', 'monthly', 'weekly', 'daily']
-        if any(kw in query.lower() for kw in time_keywords) and numeric_cols:
-            return {
-                'visualization_type': 'line',
-                'title': 'Trend Analysis',
-                'x_axis': data.columns[0],
-                'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
-                'description': 'Time series visualization'
-            }
-        
-        # Distribution/breakdown
-        dist_keywords = ['distribution', 'breakdown', 'by', 'each', 'per']
-        if any(kw in query.lower() for kw in dist_keywords):
-            if n_rows <= 8:
+        try:
+            n_rows = len(data)
+            n_cols = len(data.columns)
+            
+            # Single value
+            if n_rows == 1 and n_cols <= 3:
                 return {
-                    'visualization_type': 'pie',
-                    'title': 'Distribution',
-                    'x_axis': data.columns[0],
-                    'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
-                    'description': 'Distribution breakdown'
+                    'visualization_type': 'number',
+                    'title': 'Result',
+                    'description': 'Single value result',
+                    'x_axis': data.columns[0] if n_cols > 0 else None,
+                    'y_axis': data.columns[1] if n_cols > 1 else None
                 }
-            else:
+            
+            # Detect numeric columns
+            numeric_cols = data.select_dtypes(include=['number']).columns.tolist()
+            
+            # Time series keywords
+            time_keywords = ['trend', 'over time', 'timeline', 'history', 'monthly', 'weekly', 'daily', 'yearly']
+            if any(kw in query.lower() for kw in time_keywords) and numeric_cols:
+                return {
+                    'visualization_type': 'line',
+                    'title': 'Trend Analysis',
+                    'x_axis': data.columns[0],
+                    'y_axis': numeric_cols[0] if numeric_cols else data.columns[1] if n_cols > 1 else data.columns[0],
+                    'description': 'Time series visualization'
+                }
+            
+            # Distribution/breakdown
+            dist_keywords = ['distribution', 'breakdown', 'by', 'each', 'per']
+            if any(kw in query.lower() for kw in dist_keywords):
+                if n_rows <= 8 and n_cols >= 2:
+                    return {
+                        'visualization_type': 'pie',
+                        'title': 'Distribution',
+                        'x_axis': data.columns[0],
+                        'y_axis': numeric_cols[0] if numeric_cols else data.columns[1] if n_cols > 1 else data.columns[0],
+                        'description': 'Distribution breakdown'
+                    }
+                elif n_rows <= 20:
+                    return {
+                        'visualization_type': 'bar',
+                        'title': 'Comparison',
+                        'x_axis': data.columns[0],
+                        'y_axis': numeric_cols[0] if numeric_cols else data.columns[1] if n_cols > 1 else data.columns[0],
+                        'description': 'Category comparison'
+                    }
+            
+            # Default to bar chart for small datasets with numeric columns
+            if n_rows <= 20 and numeric_cols and n_cols >= 2:
                 return {
                     'visualization_type': 'bar',
-                    'title': 'Comparison',
+                    'title': 'Analysis Results',
                     'x_axis': data.columns[0],
-                    'y_axis': numeric_cols[0] if numeric_cols else data.columns[1],
-                    'description': 'Category comparison'
+                    'y_axis': numeric_cols[0],
+                    'description': 'Data analysis results'
                 }
-        
-        # Default based on data shape
-        if n_rows <= 20 and numeric_cols:
+                
+            # Fallback to table view
             return {
-                'visualization_type': 'bar',
-                'title': 'Analysis Results',
-                'x_axis': data.columns[0],
-                'y_axis': numeric_cols[0],
-                'description': f'Analysis of {n_rows} records'
+                'visualization_type': 'table',
+                'title': 'Data Table',
+                'description': f'Detailed view of {n_rows} records',
+                'x_axis': data.columns[0] if n_cols > 0 else None,
+                'y_axis': data.columns[1] if n_cols > 1 else None
             }
-        
-        # Fallback to table
-        return {
-            'visualization_type': 'table',
-            'title': 'Data Table',
-            'description': f'Detailed view of {n_rows} records'
-        }
+            
+        except Exception as e:
+            logger.error(f"Error in fallback viz config: {e}", exc_info=True)
+            # Ultimate fallback
+            return {
+                'visualization_type': 'table',
+                'title': 'Results',
+                'description': 'Data view',
+                'x_axis': None,
+                'y_axis': None
+            }
